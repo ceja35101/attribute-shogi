@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
+    <title>属性付き将棋</title>
+    <link rel="stylesheet" href="styles.css?v=22" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="panel">
+        <h1>属性付き将棋</h1>
+        <p class="subtitle">仕様書に沿った MVP 版です。属性相性で戦闘結果が変わります。</p>
+        <div class="status-row">
+          <div id="turn" class="pill">手番: 先手</div>
+          <button id="reset" class="secondary">初期化</button>
+        </div>
+        <div id="message" class="message">先手の番です。駒を選んでください。</div>
+        <section class="log-panel" aria-label="直近の対局ログ">
+          <h2>直近5手</h2>
+          <ol id="move-log" class="move-log"></ol>
+        </section>
+        <div class="board-frame">
+          <div id="cpu-stock" class="stock stock-top"></div>
+          <div class="board-coordinate-grid">
+            <div class="axis-corner" aria-hidden="true"></div>
+            <div class="board-axis board-axis-x" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></div>
+            <div class="board-axis board-axis-y" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></div>
+            <div id="board" class="board" aria-label="盤面"></div>
+          </div>
+          <div id="human-stock" class="stock stock-bottom"></div>
+        </div>
+      </section>
+
+      <aside class="panel side-panel">
+        <h2>属性相性</h2>
+        <ul class="legend">
+          <li><span class="chip fire">🔥 火</span>風に勝ち、水に負ける</li>
+          <li><span class="chip water">💧 水</span>火に勝ち、風に負ける</li>
+          <li><span class="chip wind"><img src="tornado.svg?v=2" alt="">風</span>水に勝ち、火に負ける</li>
+        </ul>
+
+        <h3>王の特殊ルール</h3>
+        <ul class="king-rules">
+          <li>弱属性攻撃の1回目は返り討ち、2回目は王側の敗北です。</li>
+          <li>同属性衝突を4ターン耐えると王側が勝利し、攻撃駒は消滅します。</li>
+          <li>王側の強属性援軍は攻撃駒を捕獲し、相手側の強属性援軍は王を倒します。</li>
+        </ul>
+
+        <h3>持ち駒</h3>
+        <div class="captured-grid">
+          <div>
+            <h4>先手</h4>
+            <ul id="black-hand" class="captured-list"></ul>
+          </div>
+          <div>
+            <h4>後手</h4>
+            <ul id="white-hand" class="captured-list"></ul>
+          </div>
+        </div>
+
+        <h3>操作方法</h3>
+        <ol>
+          <li>自分の駒を選択します。</li>
+          <li>移動候補または攻撃候補をクリックします。</li>
+          <li>緑は有利、赤は不利、黄は同属性です。持ち駒は盤の下から選べます。</li>
+          <li>同属性は衝突マスを6ターン封鎖します。前後に強属性の援軍を置くと制圧できます。</li>
+        </ol>
+      </aside>
+    </main>
+
+    <script src="app.js?v=19"></script>
+  </body>
+</html>

@@ -1,0 +1,14 @@
+.conda/
+.agents/
+server.log
+
+# Local browser/test artifacts
+*-result.png
+*-result-*.png
+*-test.html
+.edge-*/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/

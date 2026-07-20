@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>属性将棋 回帰テスト</title>
+  <style>
+    body{font-family:system-ui,sans-serif;max-width:900px;margin:32px auto;padding:0 16px;background:#111827;color:#f9fafb}
+    iframe{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+    li{margin:8px 0;padding:10px 12px;border-radius:8px;background:#1f2937}
+    .pass{border-left:5px solid #22c55e}.fail{border-left:5px solid #ef4444}code{color:#bfdbfe}
+  </style>
+</head>
+<body>
+  <h1>属性将棋 回帰テスト</h1>
+  <p id="summary">ゲームを読み込んでいます…</p>
+  <ol id="results"></ol>
+  <iframe id="game" src="../index.html" title="テスト対象"></iframe>
+  <script>
+    const frame=document.getElementById("game");
+    frame.addEventListener("load",()=>setTimeout(run,300));
+    function run(){
+      let report;
+      try{
+        report=frame.contentWindow.eval(`(()=>{
+          const checks=[];
+          const check=(name,pass,detail='')=>checks.push({name,pass:Boolean(pass),detail});
+          state=initialState();
+          const pieces=state.board.flat().filter(Boolean);
+          const attrs=pieces.reduce((a,p)=>(a[p.attr]=(a[p.attr]||0)+1,a),{});
+          check('盤面は9×9',state.board.length===9&&state.board.every(r=>r.length===9));
+          check('初期駒は40枚',pieces.length===40,String(pieces.length));
+          check('属性数は均等',Math.max(...Object.values(attrs))-Math.min(...Object.values(attrs))<=1,JSON.stringify(attrs));
+          check('初期局面に合法手がある',allMoves('white').length>0,String(allMoves('white').length));
+          check('火→風は有利',combat('fire','wind')==='capture');
+          check('風→水は有利',combat('wind','water')==='capture');
+          check('水→火は有利',combat('water','fire')==='capture');
+          check('同属性は衝突',combat('fire','fire')==='same');
+          const counts={king:8,rook:16,bishop:16,gold:6,silver:5,knight:2,lance:4,pawn:1};
+          let movement=true;
+          for(const [type,expected] of Object.entries(counts)){
+            state=initialState();state.board=Array.from({length:9},()=>Array(9).fill(null));state.clashes=[];
+            const p=piece(type,'white');p.attr='fire';state.board[4][4]=p;
+            movement&&=rawMoves(p,4,4,state.board).length===expected;
+          }
+          check('全駒の基本移動数',movement);
+          state=initialState();
+          check('初期局面を終局扱いしない',resolveNoLegalMoves()===false&&state.winner===null);
+          return checks;
+        })()`);
+      }catch(error){report=[{name:'テスト実行',pass:false,detail:error.stack||String(error)}]}
+      const list=document.getElementById('results');
+      report.forEach(item=>{const li=document.createElement('li');li.className=item.pass?'pass':'fail';li.textContent=`${item.pass?'✓':'✗'} ${item.name}${item.detail?' — '+item.detail:''}`;list.appendChild(li)});
+      const passed=report.filter(x=>x.pass).length;
+      document.getElementById('summary').textContent=`${passed}/${report.length} 件成功`;
+    }
+  </script>
+</body>
+</html>

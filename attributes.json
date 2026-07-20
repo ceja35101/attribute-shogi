@@ -1,0 +1,5 @@
+{
+  "fire": { "label": "火", "icon": "🔥", "beats": "wind" },
+  "water": { "label": "水", "icon": "💧", "beats": "fire" },
+  "wind": { "label": "風", "icon": "tornado.svg?v=2", "iconType": "image", "beats": "water" }
+}
