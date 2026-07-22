@@ -53,6 +53,38 @@ h4 {
   margin-bottom: 12px;
 }
 
+.game-settings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: -4px 0 12px;
+}
+
+.game-settings label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #cbd5e1;
+  font-size: .85rem;
+  font-weight: 700;
+}
+
+.game-settings select {
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 7px;
+  padding: 6px 8px;
+  background: #1f2937;
+  color: #fff;
+  font: inherit;
+}
+
+.game-settings button {
+  padding: 6px 10px;
+  border-radius: 7px;
+  font-size: .82rem;
+}
+
 .pill,
 button {
   border-radius: 999px;
@@ -91,6 +123,76 @@ button.secondary {
 .message.success { border-color: #4ade80; }
 .message.error { border-color: #f87171; }
 .message.warning { border-color: #fbbf24; }
+
+.rules-dialog {
+  width: min(720px, calc(100% - 32px));
+  max-height: calc(100vh - 32px);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 16px;
+  padding: 0;
+  background: #111827;
+  color: #f9fafb;
+  box-shadow: 0 24px 80px rgba(0,0,0,.65);
+}
+
+.rules-dialog::backdrop {
+  background: rgba(3,7,18,.78);
+  backdrop-filter: blur(3px);
+}
+
+.rules-dialog form { padding: 20px; }
+.rules-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.rules-dialog-header h2 { margin: 0; }
+.rules-dialog-header button {
+  padding: 6px 10px;
+  border-radius: 7px;
+}
+
+.tutorial-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 10px;
+}
+
+.tutorial-grid section {
+  padding: 12px;
+  border: 1px solid rgba(129,140,248,.3);
+  border-radius: 10px;
+  background: rgba(79,70,229,.08);
+}
+
+.tutorial-grid h3 {
+  margin: 0 0 5px;
+  color: #c7d2fe;
+  font-size: 1rem;
+}
+
+.tutorial-grid p {
+  margin: 0;
+  color: #e5e7eb;
+  font-size: .88rem;
+  line-height: 1.55;
+}
+
+.tutorial-check {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 16px 0 10px;
+  color: #cbd5e1;
+  font-size: .86rem;
+}
+
+.tutorial-start {
+  width: 100%;
+  border-radius: 8px;
+}
 
 .log-panel {
   margin-bottom: 12px;
@@ -602,6 +704,11 @@ button.secondary {
   .app-shell {
     grid-template-columns: 1fr;
   }
+}
+
+@media (max-width: 560px) {
+  .tutorial-grid { grid-template-columns: 1fr; }
+  .rules-dialog form { padding: 14px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

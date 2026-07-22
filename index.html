@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
     <title>属性付き将棋</title>
-    <link rel="stylesheet" href="styles.css?v=25" />
+    <link rel="stylesheet" href="styles.css?v=26" />
   </head>
   <body>
     <main class="app-shell">
@@ -15,6 +15,17 @@
         <div class="status-row">
           <div id="turn" class="pill" aria-live="polite">手番: 先手</div>
           <button id="reset" class="secondary">初期化</button>
+        </div>
+        <div class="game-settings" aria-label="ゲーム設定">
+          <label>CPU
+            <select id="cpu-difficulty">
+              <option value="easy">やさしい</option>
+              <option value="normal" selected>ふつう</option>
+              <option value="hard">むずかしい</option>
+            </select>
+          </label>
+          <button id="sound-toggle" type="button" class="secondary" aria-pressed="false">🔊 効果音</button>
+          <button id="open-rules" type="button" class="secondary">遊び方・ルール</button>
         </div>
         <div id="message" class="message" role="status" aria-live="polite" aria-atomic="true">先手の番です。駒を選んでください。</div>
         <section class="log-panel" aria-label="直近の対局ログ">
@@ -79,7 +90,40 @@
       </aside>
     </main>
 
-    <script src="game-core.js?v=4"></script>
-    <script src="app.js?v=24"></script>
+    <dialog id="rules-dialog" class="rules-dialog" aria-labelledby="rules-title">
+      <form method="dialog">
+        <div class="rules-dialog-header">
+          <h2 id="rules-title">属性将棋の遊び方</h2>
+          <button value="close" class="secondary" aria-label="閉じる">閉じる</button>
+        </div>
+        <div class="tutorial-grid">
+          <section>
+            <h3>1. 基本操作</h3>
+            <p>自分の駒を選び、色の付いた移動先を選びます。持ち駒は盤面下から選択できます。</p>
+          </section>
+          <section>
+            <h3>2. 属性戦闘</h3>
+            <p><strong>火 → 風 → 水 → 火</strong> の順で有利です。緑は有利、赤は不利、黄は同属性です。</p>
+          </section>
+          <section>
+            <h3>3. 衝突と援軍</h3>
+            <p>同属性は衝突してマスを封鎖します。衝突前から盤上にいた強属性駒を水色の援軍位置へ移動すると制圧できます。</p>
+          </section>
+          <section>
+            <h3>4. 王と勝敗</h3>
+            <p>王は弱属性攻撃の1回目を返り討ちにし、2回目で敗北します。王を規定の戦闘結果で倒すと勝利です。</p>
+          </section>
+          <section>
+            <h3>5. 直前手と棋譜</h3>
+            <p>青紫の枠が直前手です。ログや前後ボタンから過去局面を確認できます。</p>
+          </section>
+        </div>
+        <label class="tutorial-check"><input id="skip-tutorial" type="checkbox"> 次回から起動時に表示しない</label>
+        <button value="start" class="tutorial-start">対局を始める</button>
+      </form>
+    </dialog>
+
+    <script src="game-core.js?v=5"></script>
+    <script src="app.js?v=25"></script>
   </body>
 </html>

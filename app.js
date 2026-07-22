@@ -1,7 +1,33 @@
-let replayIndex=null;
+let replayIndex=null,lastSoundSnapshot=-1,audioContext=null;
+let soundEnabled=localStorage.getItem("attributeShogiSound")!=="off";
+cpuDifficulty=localStorage.getItem("attributeShogiDifficulty")||"normal";
 promotionPrompt=p=>window.confirm(`${PIECES[p.type].symbol}を成りますか？`);
 
 const shownState=()=>replayIndex===null?state:state.snapshots[replayIndex]?.position||state;
+
+function playMoveSound(lastMove,tone){
+  if(!soundEnabled||!lastMove)return;
+  const AudioCtx=window.AudioContext||window.webkitAudioContext;
+  if(!AudioCtx)return;
+  audioContext||=new AudioCtx();
+  if(audioContext.state==="suspended")audioContext.resume();
+  const oscillator=audioContext.createOscillator(),gain=audioContext.createGain(),now=audioContext.currentTime;
+  const frequency=lastMove.kind==="support"?660:lastMove.kind==="drop"?430:tone==="error"?170:300;
+  oscillator.type=lastMove.kind==="support"?"triangle":"sine";
+  oscillator.frequency.setValueAtTime(frequency,now);
+  gain.gain.setValueAtTime(.0001,now);
+  gain.gain.exponentialRampToValueAtTime(.09,now+.018);
+  gain.gain.exponentialRampToValueAtTime(.0001,now+.16);
+  oscillator.connect(gain).connect(audioContext.destination);
+  oscillator.start(now);
+  oscillator.stop(now+.18);
+}
+
+function updateSoundButton(){
+  const button=document.getElementById("sound-toggle");
+  button.textContent=soundEnabled?"🔊 効果音":"🔇 ミュート";
+  button.setAttribute("aria-pressed",String(!soundEnabled));
+}
 
 function selectBoard(x,y){
   if(replayIndex!==null)return;
@@ -165,7 +191,11 @@ function renderReplayControls(){
 
 function render(){
   if(state.autoPlay)return;
-  recordSnapshot();
+  const snapshotIndex=recordSnapshot();
+  if(replayIndex===null&&snapshotIndex>0&&snapshotIndex!==lastSoundSnapshot){
+    playMoveSound(state.lastMove,state.tone);
+    lastSoundSnapshot=snapshotIndex;
+  }
   renderBoard();
   renderHand(CPU,"black-hand","cpu-stock");
   renderHand(HUMAN,"white-hand","human-stock");
@@ -191,6 +221,23 @@ function bind(){
   document.getElementById("replay-prev").addEventListener("click",()=>showReplay((replayIndex===null?state.snapshots.length-1:replayIndex)-1));
   document.getElementById("replay-next").addEventListener("click",()=>showReplay(replayIndex+1));
   document.getElementById("replay-current").addEventListener("click",returnToCurrent);
+  const difficulty=document.getElementById("cpu-difficulty");
+  difficulty.value=cpuDifficulty;
+  difficulty.addEventListener("change",()=>{
+    cpuDifficulty=difficulty.value;
+    localStorage.setItem("attributeShogiDifficulty",cpuDifficulty);
+  });
+  document.getElementById("sound-toggle").addEventListener("click",()=>{
+    soundEnabled=!soundEnabled;
+    localStorage.setItem("attributeShogiSound",soundEnabled?"on":"off");
+    updateSoundButton();
+  });
+  const dialog=document.getElementById("rules-dialog"),skip=document.getElementById("skip-tutorial");
+  document.getElementById("open-rules").addEventListener("click",()=>dialog.showModal());
+  dialog.addEventListener("close",()=>{
+    if(skip.checked)localStorage.setItem("attributeShogiTutorialSeen","yes");
+  });
+  updateSoundButton();
 }
 
 async function bootstrap(){
@@ -201,6 +248,7 @@ async function bootstrap(){
     state=initialState();
     bind();
     render();
+    if(localStorage.getItem("attributeShogiTutorialSeen")!=="yes")document.getElementById("rules-dialog").showModal();
   }catch(e){
     document.getElementById("message").textContent=`起動エラー: ${e.message}。HTTPサーバーから開いてください。`;
   }
