@@ -493,6 +493,24 @@ button.danger:hover { background: #991b1b; }
 .result-same { background: #92400e; }
 .result-support { background: #155e75; }
 
+.square.support-slot { box-shadow: inset 0 0 0 3px #22d3ee; }
+.support-slot-badge {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  width: 1.45em;
+  height: 1.45em;
+  border-radius: 999px;
+  background: #155e75;
+  color: #fff;
+  border: 1px solid #cffafe;
+  font-size: .65rem;
+  font-weight: 900;
+}
+
 .move-arrow {
   position: absolute;
   inset: 0;
@@ -567,6 +585,11 @@ button.danger:hover { background: #991b1b; }
   box-shadow: inset 0 0 0 3px #facc15;
 }
 
+.square.weak-king-clash {
+  background: repeating-linear-gradient(135deg, #7f1d1d 0 8px, #312e81 8px 16px);
+  box-shadow: inset 0 0 0 3px #fb7185;
+}
+
 .clash-icon {
   position: absolute;
   inset: 4%;
@@ -600,7 +623,7 @@ button.danger:hover { background: #991b1b; }
   border-radius: 999px;
   background: #dc2626;
   color: #fff;
-  font-size: .55rem;
+  font-size: .58rem;
   line-height: 1;
   transform: none;
 }

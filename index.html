@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#111827" />
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
     <title>属性付き将棋</title>
-    <link rel="stylesheet" href="styles.css?v=30" />
+    <link rel="stylesheet" href="styles.css?v=32" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="app-icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon-192.png" />
@@ -75,9 +75,10 @@
 
         <h3>王の特殊ルール</h3>
         <ul class="king-rules">
-          <li>弱属性攻撃の1回目は返り討ち、2回目は王側の敗北です。</li>
-          <li>王と通常駒の同属性衝突は、王が4ターン耐えると王側の勝利です。</li>
+          <li>王の耐久は4です。弱属性攻撃は短期膠着となり、王側の手番終了後に耐久1を失って攻撃駒を持ち駒にします。</li>
+          <li>王と通常駒の同属性衝突は、強属性援軍がなければ4ターン後に王の耐久が2減ります。</li>
           <li>王側の強属性援軍は攻撃駒を捕獲し、相手側の強属性援軍は王を倒します。</li>
+          <li>援軍位置へ進入できるのは、膠着属性に勝つ強属性駒だけです。</li>
           <li>同属性の王同士は、4ターン以内なら先に強属性援軍を送った側、膠着した場合は攻撃側が勝利します。</li>
         </ul>
 
@@ -126,7 +127,7 @@
           </section>
           <section>
             <h3>4. 王と勝敗</h3>
-            <p>王は弱属性攻撃の1回目を返り討ちにし、2回目で敗北します。王を規定の戦闘結果で倒すと勝利です。</p>
+            <p>王の耐久は4です。弱属性の短期膠着で1、同属性膠着の自然解消で2を失い、耐久0で敗北します。強属性援軍は膠着を即決着させます。</p>
           </section>
           <section>
             <h3>5. 直前手と棋譜</h3>
@@ -156,8 +157,8 @@
       </div>
     </dialog>
 
-    <footer class="app-footer">属性将棋 Ver0.1.0-beta.2</footer>
-    <script src="game-core.js?v=9"></script>
-    <script src="app.js?v=29"></script>
+    <footer class="app-footer">属性将棋 Ver0.1.0-beta.3</footer>
+    <script src="game-core.js?v=10"></script>
+    <script src="app.js?v=31"></script>
   </body>
 </html>

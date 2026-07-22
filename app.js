@@ -1,4 +1,4 @@
-const SAVE_KEY="attributeShogiSavedGame",SAVE_VERSION=1;
+const SAVE_KEY="attributeShogiSavedGame",SAVE_VERSION=2;
 let replayIndex=null,lastSoundSnapshot=-1,audioContext=null,saveNotice="";
 let soundEnabled=localStorage.getItem("attributeShogiSound")!=="off";
 let soundVolume=Number(localStorage.getItem("attributeShogiVolume")??.7);
@@ -49,7 +49,7 @@ function exportRecord(){
 }
 
 async function copyDiagnostics(){
-  const details=["属性将棋 診断情報","Version: 0.1.0-beta.2",`UserAgent: ${navigator.userAgent}`,`手数: ${state.ply}`,`手番: ${state.turn}`,`勝者: ${state.winner||"なし"}`,`衝突数: ${state.clashes.length}`,"直近ログ:",...state.log.map(item=>`${item.number}. ${item.text}`)].join("\n");
+  const details=["属性将棋 診断情報","Version: 0.1.0-beta.3",`UserAgent: ${navigator.userAgent}`,`手数: ${state.ply}`,`手番: ${state.turn}`,`勝者: ${state.winner||"なし"}`,`衝突数: ${state.clashes.length}`,"直近ログ:",...state.log.map(item=>`${item.number}. ${item.text}`)].join("\n");
   try{await navigator.clipboard.writeText(details);state.message="診断情報をクリップボードへコピーしました。";state.tone="success"}catch(error){state.message="診断情報をコピーできませんでした。HTTPSまたはlocalhostで開いてください。";state.tone="error"}render();
 }
 
@@ -132,6 +132,7 @@ function renderBoard(){
   shown.board.forEach((row,y)=>row.forEach((p,x)=>{
     const b=document.createElement("button");
     const clash=shown.clashes.find(c=>c.x===x&&c.y===y);
+    const supportSlot=shown.clashes.find(c=>c.support.some(slot=>slot.x===x&&slot.y===y));
     b.type="button";
     b.className=`square ${(x+y)%2?"dark":"light"}`;
     b.dataset.x=x;
@@ -143,6 +144,7 @@ function renderBoard(){
       b.classList.add("last-move-to");
       if(recent)b.classList.add("recent-move",`effect-${shown.tone||"info"}`);
     }
+    if(supportSlot)b.classList.add("support-slot");
     if(replayIndex===null&&state.selected?.kind==="board"&&state.selected.x===x&&state.selected.y===y)b.classList.add("selected");
     const m=replayIndex===null&&state.moves.find(v=>v.x===x&&v.y===y);
     if(m)b.classList.add(m.result==="capture"?"capture-target":m.result==="retaliation"?"retaliation-target":m.result==="same"?"same-target":m.result==="support"?"support-target":"move-target");
@@ -150,12 +152,13 @@ function renderBoard(){
       const remaining=clash.expiresAt-shown.ply;
       b.classList.add("clash-square");
       if(clash.kingCollision)b.classList.add("king-clash");
+      if(clash.weakCollision)b.classList.add("weak-king-clash");
       b.disabled=true;
-      b.title=`${clash.kingCollision?"王の":""}${ATTRIBUTE_DATA[clash.attr].label}属性衝突・残り${remaining}ターン`;
+      b.title=`${clash.weakCollision?"王への弱属性短期膠着":`${clash.kingCollision?"王の":""}${ATTRIBUTE_DATA[clash.attr].label}属性衝突`}・残り${remaining}ターン`;
       b.innerHTML=`<span class="clash-icon">${attributeIcon(clash.attr)}</span><span class="clash-pieces">${clash.pieces.map(q=>symbol(q)).join("×")}</span><span class="clash-turns">${remaining}</span>`;
     }else if(p){
-      b.title=`${symbol(p)} / ${ATTRIBUTE_DATA[p.attr].label}属性${p.type==="king"?` / 弱属性被弾 ${p.weakHits}/2`:""}`;
-      b.innerHTML=`<span class="piece ${p.color}"><span class="piece-symbol ${p.color===CPU?"flipped":""}">${symbol(p)}</span><span class="attr attr-${p.attr}">${attributeIcon(p.attr)}</span>${p.type==="king"&&p.weakHits?`<span class="king-damage">1/2</span>`:""}</span>`;
+      b.title=`${symbol(p)} / ${ATTRIBUTE_DATA[p.attr].label}属性${p.type==="king"?` / 耐久 ${4-(p.weakHits||0)}/4`:""}`;
+      b.innerHTML=`<span class="piece ${p.color}"><span class="piece-symbol ${p.color===CPU?"flipped":""}">${symbol(p)}</span><span class="attr attr-${p.attr}">${attributeIcon(p.attr)}</span>${p.type==="king"&&p.weakHits?`<span class="king-damage">${4-p.weakHits}/4</span>`:""}</span>`;
     }
     if(last?.to.x===x&&last.to.y===y&&last.badge){
       const badge=document.createElement("span");
@@ -169,7 +172,8 @@ function renderBoard(){
       resultBadge.textContent=labels[m.result]||"";
       b.appendChild(resultBadge);
       b.setAttribute("aria-label",`${coord(x,y)} ${labels[m.result]||"移動"}`);
-    }else b.setAttribute("aria-label",`${coord(x,y)}${p?` ${symbol(p)} ${ATTRIBUTE_DATA[p.attr].label}属性`:" 空きマス"}`);
+    }else b.setAttribute("aria-label",`${coord(x,y)}${p?` ${symbol(p)} ${ATTRIBUTE_DATA[p.attr].label}属性`:" 空きマス"}${supportSlot?" 強属性援軍位置":""}`);
+    if(supportSlot&&!clash){const marker=document.createElement("span");marker.className="support-slot-badge";marker.textContent="援";marker.setAttribute("aria-hidden","true");b.appendChild(marker)}
     el.appendChild(b);
   }));
   appendMoveArrow(el,last,recent);
