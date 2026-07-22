@@ -6,8 +6,10 @@
     <meta name="theme-color" content="#111827" />
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
     <title>属性付き将棋</title>
-    <link rel="stylesheet" href="styles.css?v=29" />
+    <link rel="stylesheet" href="styles.css?v=30" />
     <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="app-icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
   </head>
   <body>
     <main class="app-shell">
@@ -29,6 +31,12 @@
           <button id="sound-toggle" type="button" class="secondary" aria-pressed="false">🔊 効果音</button>
           <label>音量 <input id="sound-volume" type="range" min="0" max="1" step="0.1" value="0.7"></label>
           <button id="open-rules" type="button" class="secondary">遊び方・ルール</button>
+        </div>
+        <div class="game-actions" aria-label="対局操作">
+          <button id="save-game" type="button" class="secondary">対局を保存</button>
+          <button id="export-record" type="button" class="secondary">棋譜を出力</button>
+          <button id="copy-diagnostics" type="button" class="secondary">診断情報をコピー</button>
+          <button id="resign" type="button" class="danger">投了</button>
         </div>
         <div id="message" class="message" role="status" aria-live="polite" aria-atomic="true">先手の番です。駒を選んでください。</div>
         <div id="end-actions" class="end-actions" hidden>
@@ -139,8 +147,17 @@
       </div>
     </dialog>
 
-    <footer class="app-footer">属性将棋 Ver0.1.0-beta.1</footer>
-    <script src="game-core.js?v=8"></script>
-    <script src="app.js?v=27"></script>
+    <dialog id="resign-dialog" class="promotion-dialog" aria-labelledby="resign-title">
+      <h2 id="resign-title">投了しますか？</h2>
+      <p>投了するとCPUの勝利となり、対局は終了します。</p>
+      <div>
+        <button id="resign-yes" type="button" class="danger">投了する</button>
+        <button id="resign-no" type="button" class="secondary">戻る</button>
+      </div>
+    </dialog>
+
+    <footer class="app-footer">属性将棋 Ver0.1.0-beta.2</footer>
+    <script src="game-core.js?v=9"></script>
+    <script src="app.js?v=29"></script>
   </body>
 </html>

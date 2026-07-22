@@ -1,0 +1,36 @@
+name: Browser tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start static server
+        run: |
+          python3 -m http.server 8000 >/tmp/attribute-shogi-server.log 2>&1 &
+          for attempt in {1..20}; do
+            curl --fail --silent http://127.0.0.1:8000/ >/dev/null && exit 0
+            sleep 0.25
+          done
+          exit 1
+      - name: Run browser regression tests
+        run: |
+          google-chrome --headless=new --no-sandbox --disable-gpu --virtual-time-budget=10000 --dump-dom http://127.0.0.1:8000/tests/regression.html > regression.html
+          grep -q "55/55 件成功" regression.html
+      - name: Run durability test
+        run: |
+          google-chrome --headless=new --no-sandbox --disable-gpu --virtual-time-budget=120000 --dump-dom http://127.0.0.1:8000/tests/durability.html > durability.html
+          grep -q "PASS: 耐久テスト完了" durability.html
+      - name: Upload diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-test-output
+          path: |
+            regression.html
+            durability.html
+            /tmp/attribute-shogi-server.log

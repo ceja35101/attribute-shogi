@@ -6,7 +6,7 @@
   <title>属性将棋 回帰テスト</title>
   <style>
     body{font-family:system-ui,sans-serif;max-width:900px;margin:32px auto;padding:0 16px;background:#111827;color:#f9fafb}
-    iframe{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+    iframe{position:absolute;left:-10000px;top:0;width:1200px;height:900px;pointer-events:none}
     li{margin:8px 0;padding:10px 12px;border-radius:8px;background:#1f2937}
     .pass{border-left:5px solid #22c55e}.fail{border-left:5px solid #ef4444}code{color:#bfdbfe}
   </style>
@@ -15,10 +15,11 @@
   <h1>属性将棋 回帰テスト</h1>
   <p id="summary">ゲームを読み込んでいます…</p>
   <ol id="results"></ol>
-    <iframe id="game" src="../index.html" title="テスト対象"></iframe>
+    <iframe id="game" title="テスト対象"></iframe>
   <script>
-    const frame=document.getElementById("game");
-    frame.addEventListener("load",()=>setTimeout(run,300));
+    const frame=document.getElementById("game");let started=false;
+    function startWhenReady(){if(started)return;const count=frame.contentDocument?.querySelectorAll('.square').length||0;document.getElementById('summary').textContent=`ゲームを読み込んでいます… (${count}/81)`;if(count===81){started=true;setTimeout(run,100);return}setTimeout(startWhenReady,100)}
+    frame.addEventListener("load",startWhenReady);frame.src="../index.html";startWhenReady();
     function run(){
       let report;
       try{
@@ -115,6 +116,10 @@
           state.ply=1;addLog('歩 : 1-7 → 1-6');recordSnapshot();
           check('直前手の移動元と移動先を記録',state.lastMove.from.x===0&&state.lastMove.from.y===6&&state.lastMove.to.x===0&&state.lastMove.to.y===5);
           check('着手ごとの局面スナップショットを保存',state.snapshots.length===2&&state.log[0].snapshotIndex===1);
+          for(let i=2;i<=8;i++){state.ply=i;addLog('歩 : 1-'+i+' → 1-'+(i+1))}
+          check('表示5手とは別に全手棋譜を保持',state.log.length===5&&state.fullLog.length===8);
+          saveGame();const restored=restoreGame();
+          check('対局を保存して復元',restored?.ply===8&&restored.fullLog.length===8&&restored.aiThinking===false);
           trackLastMove('角 : 持ち駒 → 5-5','white');
           check('駒打ちに打マークを記録',state.lastMove.kind==='drop'&&state.lastMove.badge==='打'&&state.lastMove.from===null);
           state=initialState();trackLastMove('歩 : 1-7 → 1-6','white');renderBoard();
@@ -136,7 +141,12 @@
           state.moves=[{x:4,y:4,result:'retaliation'}];renderBoard();
           check('戦闘候補を文字でも表示',document.querySelector('.move-result-badge')?.textContent==='不利');
           check('再対局ボタンを用意',Boolean(document.getElementById('new-game')));
+          check('保存・棋譜出力・投了操作を用意',['save-game','export-record','resign'].every(id=>document.getElementById(id)));
+          check('不具合報告用の診断情報コピーを用意',Boolean(document.getElementById('copy-diagnostics')));
+          state=initialState();document.getElementById('resign').click();document.getElementById('resign-yes').click();
+          check('投了でCPU勝利として終局',state.winner==='black'&&state.message.includes('投了'));
           check('PWAマニフェストを設定',document.querySelector('link[rel="manifest"]')?.getAttribute('href')==='manifest.webmanifest');
+          check('Apple端末用アイコンを設定',document.querySelector('link[rel="apple-touch-icon"]')?.getAttribute('href')==='icon-192.png');
           state=initialState();const promotionPiece=piece('pawn','white');promotionPrompt(promotionPiece);
           check('成り確認をゲーム内ダイアログで表示',document.getElementById('promotion-dialog').open);
           document.getElementById('promote-no').click();

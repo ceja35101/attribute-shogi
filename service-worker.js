@@ -1,13 +1,16 @@
-const CACHE_NAME="attribute-shogi-v3";
+const CACHE_NAME="attribute-shogi-v5";
 const ASSETS=[
   "./",
   "./index.html",
-  "./styles.css?v=29",
-  "./game-core.js?v=8",
-  "./app.js?v=27",
+  "./styles.css?v=30",
+  "./game-core.js?v=9",
+  "./app.js?v=29",
   "./attributes.json",
   "./tornado.svg?v=2",
   "./manifest.webmanifest",
+  "./app-icon.svg",
+  "./icon-192.png",
+  "./icon-512.png",
   "./RULES.md"
 ];
 
@@ -23,9 +26,12 @@ self.addEventListener("activate",event=>{
 
 self.addEventListener("fetch",event=>{
   if(event.request.method!=="GET")return;
+  if(event.request.mode==="navigate"){
+    event.respondWith(fetch(event.request).then(response=>response.ok?response:Promise.reject(Error("navigation failed"))).catch(()=>caches.match("./index.html")));
+    return;
+  }
   event.respondWith(fetch(event.request).then(response=>{
-    const copy=response.clone();
-    caches.open(CACHE_NAME).then(cache=>cache.put(event.request,copy));
+    if(response.ok&&new URL(event.request.url).origin===self.location.origin)caches.open(CACHE_NAME).then(cache=>cache.put(event.request,response.clone()));
     return response;
-  }).catch(()=>caches.match(event.request).then(response=>response||caches.match("./index.html"))));
+  }).catch(()=>caches.match(event.request).then(response=>response||Response.error())));
 });

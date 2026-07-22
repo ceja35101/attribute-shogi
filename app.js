@@ -1,4 +1,5 @@
-let replayIndex=null,lastSoundSnapshot=-1,audioContext=null;
+const SAVE_KEY="attributeShogiSavedGame",SAVE_VERSION=1;
+let replayIndex=null,lastSoundSnapshot=-1,audioContext=null,saveNotice="";
 let soundEnabled=localStorage.getItem("attributeShogiSound")!=="off";
 let soundVolume=Number(localStorage.getItem("attributeShogiVolume")??.7);
 cpuDifficulty=localStorage.getItem("attributeShogiDifficulty")||"normal";
@@ -18,6 +19,39 @@ promotionPrompt=p=>new Promise(resolve=>{
 });
 
 const shownState=()=>replayIndex===null?state:state.snapshots[replayIndex]?.position||state;
+
+function saveGame(){
+  if(!state||state.autoPlay||replayIndex!==null)return false;
+  try{
+    const snapshotStart=Math.max(0,state.snapshots.length-300),snapshots=state.snapshots.slice(snapshotStart).map((snapshot,index)=>({...snapshot,index}));
+    const log=state.log.map(item=>({...item,snapshotIndex:item.snapshotIndex==null?null:Math.max(0,item.snapshotIndex-snapshotStart)}));
+    const saved={version:SAVE_VERSION,savedAt:new Date().toISOString(),state:{...state,selected:null,moves:[],aiThinking:false,snapshots,log}};
+    localStorage.setItem(SAVE_KEY,JSON.stringify(saved));
+    return true;
+  }catch(error){return false}
+}
+
+function restoreGame(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(SAVE_KEY)||"null"),s=saved?.state;
+    if(saved?.version!==SAVE_VERSION||!Array.isArray(s?.board)||s.board.length!==9||!s.board.every(row=>Array.isArray(row)&&row.length===9))return null;
+    const pieces=[...s.board.flat().filter(Boolean),...(s.hand?.white||[]),...(s.hand?.black||[])];
+    if(!s.hand||!s.clashes||!pieces.every(p=>PIECES[p.type]&&ATTRIBUTE_DATA[p.attr]))return null;
+    return{...s,selected:null,moves:[],aiThinking:false,autoPlay:false,fullLog:Array.isArray(s.fullLog)?s.fullLog:[],log:Array.isArray(s.log)?s.log:[],snapshots:Array.isArray(s.snapshots)?s.snapshots:[],history:Array.isArray(s.history)?s.history:[]};
+  }catch(error){return null}
+}
+
+function exportRecord(){
+  const moves=(state.fullLog?.length?state.fullLog:[...state.log].reverse()).map(item=>`${item.number}. ${item.color===HUMAN?"先手":"後手"} ${item.text}`);
+  const content=["属性将棋 棋譜",`出力日時: ${new Date().toLocaleString("ja-JP")}`,`手数: ${state.ply}`,`結果: ${state.winner?state.winner==="draw"?"引き分け":`${owner(state.winner)}の勝利`:"対局中"}`,"",...moves].join("\n");
+  const blob=new Blob([content],{type:"text/plain;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+  a.href=url;a.download=`attribute-shogi-${new Date().toISOString().slice(0,10)}.txt`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+async function copyDiagnostics(){
+  const details=["属性将棋 診断情報","Version: 0.1.0-beta.2",`UserAgent: ${navigator.userAgent}`,`手数: ${state.ply}`,`手番: ${state.turn}`,`勝者: ${state.winner||"なし"}`,`衝突数: ${state.clashes.length}`,"直近ログ:",...state.log.map(item=>`${item.number}. ${item.text}`)].join("\n");
+  try{await navigator.clipboard.writeText(details);state.message="診断情報をクリップボードへコピーしました。";state.tone="success"}catch(error){state.message="診断情報をコピーできませんでした。HTTPSまたはlocalhostで開いてください。";state.tone="error"}render();
+}
 
 function playMoveSound(lastMove,tone){
   if(!soundEnabled||!lastMove)return;
@@ -228,6 +262,7 @@ function render(){
   msg.textContent=replayIndex!==null?"過去局面を表示中です。現在局面へ戻ると対局を再開できます。":state.message;
   msg.className=`message ${replayIndex!==null?"info":state.tone}`;
   document.getElementById("end-actions").hidden=!state.winner;
+  saveGame();
 }
 
 function bind(){
@@ -237,6 +272,7 @@ function bind(){
   });
   document.getElementById("reset").addEventListener("click",()=>{
     replayIndex=null;
+    localStorage.removeItem(SAVE_KEY);
     state=initialState();
     render();
   });
@@ -275,6 +311,17 @@ function bind(){
   });
   updateSoundButton();
   document.getElementById("new-game").addEventListener("click",()=>document.getElementById("reset").click());
+  document.getElementById("save-game").addEventListener("click",()=>{
+    const ok=saveGame();state.message=ok?"現在の対局をこのブラウザーへ保存しました。":"保存できませんでした。ブラウザーの保存設定を確認してください。";state.tone=ok?"success":"error";render();
+  });
+  document.getElementById("export-record").addEventListener("click",exportRecord);
+  document.getElementById("copy-diagnostics").addEventListener("click",copyDiagnostics);
+  const resignDialog=document.getElementById("resign-dialog");
+  document.getElementById("resign").addEventListener("click",()=>{if(!state.winner&&state.turn===HUMAN&&!state.aiThinking)resignDialog.showModal()});
+  document.getElementById("resign-yes").addEventListener("click",()=>{
+    resignDialog.close();state.winner=CPU;state.selected=null;state.moves=[];state.message="あなたが投了しました。CPUの勝利です。";state.tone="success";addLog("先手 投了",HUMAN);render();
+  });
+  document.getElementById("resign-no").addEventListener("click",()=>resignDialog.close());
 }
 
 async function bootstrap(){
@@ -282,10 +329,12 @@ async function bootstrap(){
     const r=await fetch("attributes.json",{cache:"no-store"});
     if(!r.ok)throw Error("属性設定を読み込めません");
     ATTRIBUTE_DATA=await r.json();
-    state=initialState();
+    state=restoreGame()||initialState();
+    if(state.ply>0&&!state.winner){state.message=`保存した対局を${state.ply}手目から再開しました。`;state.tone="info"}
     bind();
     render();
     if(localStorage.getItem("attributeShogiTutorialSeen")!=="yes")document.getElementById("rules-dialog").showModal();
+    if(state.turn===CPU&&!state.winner){state.aiThinking=true;setTimeout(runAi,450)}
   }catch(e){
     const message=document.getElementById("message");
     message.textContent=`起動エラー: ${e.message}。HTTPサーバーから開いてください。`;

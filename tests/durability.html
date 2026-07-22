@@ -6,7 +6,7 @@
   <title>属性将棋 耐久テスト</title>
   <style>
     body{font-family:system-ui,sans-serif;max-width:900px;margin:32px auto;padding:0 16px;background:#111827;color:#f9fafb}
-    iframe{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+    iframe{position:absolute;left:-10000px;top:0;width:1200px;height:900px;pointer-events:none}
     pre{white-space:pre-wrap;padding:16px;border-radius:10px;background:#1f2937;border-left:5px solid #60a5fa}
     .pass{border-left-color:#22c55e}.fail{border-left-color:#ef4444}
   </style>
@@ -15,10 +15,11 @@
   <h1>属性将棋 耐久テスト</h1>
   <p id="status">ゲームを読み込んでいます…</p>
   <pre id="report">待機中</pre>
-  <iframe id="game" src="../index.html" title="テスト対象"></iframe>
+  <iframe id="game" title="テスト対象"></iframe>
   <script>
-    const frame=document.getElementById('game'),status=document.getElementById('status'),report=document.getElementById('report');
-    frame.addEventListener('load',()=>setTimeout(run,300));
+    const frame=document.getElementById('game'),status=document.getElementById('status'),report=document.getElementById('report');let started=false;
+    function startWhenReady(){if(started)return;if(frame.contentDocument?.querySelectorAll('.square').length===81){started=true;setTimeout(run,100);return}setTimeout(startWhenReady,100)}
+    frame.addEventListener('load',startWhenReady);frame.src='../index.html';startWhenReady();
     function run(){
       status.textContent='初期化500回と自己対戦50局を実行しています…';
       setTimeout(()=>{

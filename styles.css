@@ -112,6 +112,14 @@ button.secondary {
   color: #f9fafb;
 }
 
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+.square:focus-visible {
+  outline: 3px solid #facc15;
+  outline-offset: 3px;
+}
+
 .message {
   min-height: 56px;
   background: rgba(255,255,255,0.06);
@@ -132,6 +140,21 @@ button.secondary {
 }
 
 .end-actions[hidden] { display: none; }
+
+.game-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -5px 0 14px;
+}
+
+button.danger {
+  background: #b91c1c;
+  color: #fff;
+  border-color: #f87171;
+}
+
+button.danger:hover { background: #991b1b; }
 
 .rules-dialog {
   width: 720px;
@@ -817,4 +840,19 @@ button.secondary {
     animation: none;
   }
   .move-arrow { display: none; }
+}
+
+@media (forced-colors: active) {
+  .piece,
+  .hand-piece-icon,
+  .square,
+  .message,
+  .move-result-badge { forced-color-adjust: auto; }
+  .square.selected,
+  .last-move-from,
+  .last-move-to { outline: 3px solid Highlight; }
+  .capture-target,
+  .retaliation-target,
+  .same-target,
+  .support-target { border: 4px solid LinkText; }
 }
