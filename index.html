@@ -6,16 +6,26 @@
     <meta name="theme-color" content="#111827" />
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
     <title>属性付き将棋</title>
-    <link rel="stylesheet" href="styles.css?v=32" />
+    <link rel="stylesheet" href="styles.css?v=37" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="app-icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon-192.png" />
   </head>
   <body>
     <main class="app-shell">
-      <section class="panel">
+      <aside class="panel side-panel" aria-label="ルール概要">
+        <h2>ルール概要</h2>
+        <ul class="legend">
+          <li><span class="chip fire"><img src="fire.svg?v=2" alt="">火</span>風に勝つ</li>
+          <li><span class="chip water"><img src="water.svg?v=2" alt="">水</span>火に勝つ</li>
+          <li><span class="chip wind"><img src="tornado.svg?v=2" alt="">風</span>水に勝つ</li>
+        </ul>
+        <p class="result-legend"><span>有利</span><span>不利</span><span>同</span><span>援</span> 王の耐久は4。弱属性攻撃は1、同属性膠着の自然解消は2ダメージです。援軍は強属性のみ有効です。</p>
+      </aside>
+
+      <section class="panel game-panel">
         <h1>属性付き将棋</h1>
-        <p class="subtitle">仕様書に沿った MVP 版です。属性相性で戦闘結果が変わります。</p>
+        <p class="subtitle">属性相性によって駒の価値と戦局が変わる、新しい将棋ゲームです。</p>
         <div class="status-row">
           <div id="turn" class="pill" aria-live="polite">手番: 先手</div>
           <button id="reset" class="secondary">初期化</button>
@@ -42,68 +52,32 @@
         <div id="end-actions" class="end-actions" hidden>
           <button id="new-game" type="button">もう一度対局する</button>
         </div>
-        <section class="log-panel" aria-label="直近の対局ログ">
-          <h2>直近5手</h2>
-          <ol id="move-log" class="move-log"></ol>
-          <div class="replay-controls" aria-label="棋譜再生">
-            <button id="replay-prev" type="button" class="secondary">◀ 前の手</button>
-            <span id="replay-status">現在局面</span>
-            <button id="replay-next" type="button" class="secondary">次の手 ▶</button>
-            <button id="replay-current" type="button" class="secondary">現在局面へ戻る</button>
+        <div class="play-layout">
+          <div class="board-frame">
+            <div class="board-coordinate-grid">
+              <div class="axis-corner" aria-hidden="true"></div>
+              <div class="board-axis board-axis-x" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></div>
+              <div class="board-axis board-axis-y" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></div>
+              <div id="board" class="board" aria-label="盤面"></div>
+            </div>
           </div>
-        </section>
-        <div class="board-frame">
-          <div id="cpu-stock" class="stock stock-top"></div>
-          <div class="board-coordinate-grid">
-            <div class="axis-corner" aria-hidden="true"></div>
-            <div class="board-axis board-axis-x" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></div>
-            <div class="board-axis board-axis-y" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></div>
-            <div id="board" class="board" aria-label="盤面"></div>
-          </div>
-          <div id="human-stock" class="stock stock-bottom"></div>
+          <aside class="play-sidebar" aria-label="持ち駒と対局ログ">
+            <section class="hand-panel"><h2>後手の持ち駒</h2><div id="cpu-stock" class="stock stock-top"></div></section>
+            <section class="hand-panel"><h2>先手の持ち駒</h2><div id="human-stock" class="stock stock-bottom"></div></section>
+            <section class="log-panel" aria-label="直近の対局ログ">
+              <h2>直近5手</h2>
+              <ol id="move-log" class="move-log"></ol>
+              <div class="replay-controls" aria-label="棋譜再生">
+                <button id="replay-prev" type="button" class="secondary">◀ 前の手</button>
+                <span id="replay-status">現在局面</span>
+                <button id="replay-next" type="button" class="secondary">次の手 ▶</button>
+                <button id="replay-current" type="button" class="secondary">現在局面へ戻る</button>
+              </div>
+            </section>
+          </aside>
         </div>
+        <div class="captured-mirror" aria-hidden="true"><ul id="black-hand" class="captured-list"></ul><ul id="white-hand" class="captured-list"></ul></div>
       </section>
-
-      <aside class="panel side-panel">
-        <h2>属性相性</h2>
-        <ul class="legend">
-          <li><span class="chip fire">🔥 火</span>風に勝ち、水に負ける</li>
-          <li><span class="chip water">💧 水</span>火に勝ち、風に負ける</li>
-          <li><span class="chip wind"><img src="tornado.svg?v=2" alt="">風</span>水に勝ち、火に負ける</li>
-        </ul>
-        <p class="result-legend"><span>有利</span><span>不利</span><span>同</span><span>援</span> 移動候補には文字でも結果を表示します。</p>
-
-        <h3>王の特殊ルール</h3>
-        <ul class="king-rules">
-          <li>王の耐久は4です。弱属性攻撃は短期膠着となり、王側の手番終了後に耐久1を失って攻撃駒を持ち駒にします。</li>
-          <li>王と通常駒の同属性衝突は、強属性援軍がなければ4ターン後に王の耐久が2減ります。</li>
-          <li>王側の強属性援軍は攻撃駒を捕獲し、相手側の強属性援軍は王を倒します。</li>
-          <li>援軍位置へ進入できるのは、膠着属性に勝つ強属性駒だけです。</li>
-          <li>同属性の王同士は、4ターン以内なら先に強属性援軍を送った側、膠着した場合は攻撃側が勝利します。</li>
-        </ul>
-
-        <h3>持ち駒</h3>
-        <div class="captured-grid">
-          <div>
-            <h4>先手</h4>
-            <ul id="black-hand" class="captured-list"></ul>
-          </div>
-          <div>
-            <h4>後手</h4>
-            <ul id="white-hand" class="captured-list"></ul>
-          </div>
-        </div>
-
-        <h3>操作方法</h3>
-        <ol>
-          <li>自分の駒を選択します。</li>
-          <li>移動候補または攻撃候補をクリックします。</li>
-          <li>緑は有利、赤は不利、黄は同属性、水色は援軍勝利です。持ち駒は盤の下から選べます。</li>
-          <li>同属性は衝突マスを6ターン封鎖します。盤上の強属性駒を前後へ移動すると制圧できます。</li>
-          <li>持ち駒を援軍位置へ直接打つことはできません。衝突後に打った駒も、その衝突の援軍にはできません。</li>
-          <li>青紫の点線枠が直前の移動元、実線枠が移動先です。ログまたは前後ボタンで過去局面を確認できます。</li>
-        </ol>
-      </aside>
     </main>
 
     <dialog id="rules-dialog" class="rules-dialog" aria-labelledby="rules-title">
