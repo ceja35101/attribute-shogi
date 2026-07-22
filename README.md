@@ -43,6 +43,20 @@ CPU自己対戦は `http://localhost:8000/tests/self-play.html` を開くと100�
 - 初回起動時にチュートリアルを表示し、「遊び方・ルール」からいつでも再表示できます。
 - 難易度、ミュート、チュートリアル表示済みの設定はブラウザーに保存します。
 
+## 公開ベータ機能
+
+- 成りはゲーム内ダイアログで選択します。
+- 盤面はTab・矢印キー・Enter/Spaceでも操作できます。
+- 戦闘候補は色に加えて「有利」「不利」「同」「援」の文字を表示します。
+- HTTPSまたはlocalhostで一度起動すると、対応ブラウザーではオフラインキャッシュを利用できます。
+
+バージョンと運用情報:
+
+- [CHANGELOG.md](CHANGELOG.md)
+- [DEPLOYMENT.md](DEPLOYMENT.md)
+- [PRIVACY.md](PRIVACY.md)
+- [LICENSES.md](LICENSES.md)
+
 ## 開発状況
 
 正式リリースまでの不足項目と優先順位は [RELEASE_READINESS.md](RELEASE_READINESS.md) を参照してください。

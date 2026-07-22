@@ -79,6 +79,8 @@ h4 {
   font: inherit;
 }
 
+.game-settings input[type="range"] { width: 92px; accent-color: #f59e0b; }
+
 .game-settings button {
   padding: 6px 10px;
   border-radius: 7px;
@@ -123,6 +125,13 @@ button.secondary {
 .message.success { border-color: #4ade80; }
 .message.error { border-color: #f87171; }
 .message.warning { border-color: #fbbf24; }
+
+.end-actions {
+  margin: -8px 0 14px;
+  text-align: center;
+}
+
+.end-actions[hidden] { display: none; }
 
 .rules-dialog {
   width: min(720px, calc(100% - 32px));
@@ -193,6 +202,22 @@ button.secondary {
   width: 100%;
   border-radius: 8px;
 }
+
+.promotion-dialog {
+  width: min(420px,calc(100% - 32px));
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: 14px;
+  padding: 22px;
+  background: #111827;
+  color: #f9fafb;
+  text-align: center;
+  box-shadow: 0 24px 80px rgba(0,0,0,.65);
+}
+
+.promotion-dialog::backdrop { background: rgba(3,7,18,.78); }
+.promotion-dialog p { color: #cbd5e1; }
+.promotion-dialog div { display: flex; justify-content: center; gap: 10px; }
+.promotion-dialog button { min-width: 110px; border-radius: 8px; }
 
 .log-panel {
   margin-bottom: 12px;
@@ -422,6 +447,27 @@ button.secondary {
   box-shadow: 0 1px 3px rgba(0,0,0,.55);
 }
 
+.move-result-badge {
+  position: absolute;
+  left: 2px;
+  bottom: 2px;
+  z-index: 9;
+  padding: 1px 4px;
+  border: 1px solid #fff;
+  border-radius: 4px;
+  background: #111827;
+  color: #fff;
+  font-size: clamp(.55rem,1.2vw,.72rem);
+  font-weight: 900;
+  line-height: 1.15;
+  box-shadow: 0 1px 2px rgba(0,0,0,.55);
+}
+
+.result-capture { background: #166534; }
+.result-retaliation { background: #991b1b; }
+.result-same { background: #92400e; }
+.result-support { background: #155e75; }
+
 .move-arrow {
   position: absolute;
   inset: 0;
@@ -445,6 +491,24 @@ button.secondary {
 
 .square.recent-move .piece {
   animation: piece-arrive .32s cubic-bezier(.2,.8,.2,1);
+}
+
+.square.recent-move.effect-success { animation: combat-success .5s ease-out; }
+.square.recent-move.effect-error { animation: combat-error .55s ease-out; }
+.square.recent-move.effect-warning { animation: combat-warning .55s ease-out; }
+
+@keyframes combat-success {
+  0% { filter: brightness(1.8); box-shadow: inset 0 0 0 8px #4ade80,0 0 22px #4ade80; }
+  100% { filter: none; }
+}
+@keyframes combat-error {
+  0%,35% { transform: translateX(-3%); box-shadow: inset 0 0 0 8px #ef4444,0 0 22px #ef4444; }
+  18%,52% { transform: translateX(3%); }
+  100% { transform: none; }
+}
+@keyframes combat-warning {
+  0% { box-shadow: inset 0 0 0 8px #facc15,0 0 24px #facc15; }
+  100% { box-shadow: inset 0 0 0 5px #7c3aed; }
 }
 
 @keyframes move-arrow-fade {
@@ -649,6 +713,24 @@ button.secondary {
   color: #dbeafe;
 }
 
+.result-legend {
+  margin: -8px 0 18px;
+  color: #cbd5e1;
+  font-size: .78rem;
+  line-height: 1.5;
+}
+
+.result-legend span {
+  display: inline-block;
+  margin-right: 3px;
+  padding: 1px 4px;
+  border: 1px solid #fff;
+  border-radius: 4px;
+  background: #1f2937;
+  color: #fff;
+  font-weight: 800;
+}
+
 .king-rules {
   margin: 0 0 18px;
   padding-left: 1.25rem;
@@ -700,6 +782,13 @@ button.secondary {
   background: transparent;
 }
 
+.app-footer {
+  grid-column: 1 / -1;
+  color: #94a3b8;
+  font-size: .78rem;
+  text-align: center;
+}
+
 @media (max-width: 900px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -713,6 +802,7 @@ button.secondary {
 
 @media (prefers-reduced-motion: reduce) {
   .move-arrow,
+  .square.recent-move,
   .square.recent-move .piece {
     animation: none;
   }

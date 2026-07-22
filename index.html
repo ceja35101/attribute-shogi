@@ -3,9 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#111827" />
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
     <title>属性付き将棋</title>
-    <link rel="stylesheet" href="styles.css?v=26" />
+    <link rel="stylesheet" href="styles.css?v=28" />
+    <link rel="manifest" href="manifest.webmanifest" />
   </head>
   <body>
     <main class="app-shell">
@@ -25,9 +27,13 @@
             </select>
           </label>
           <button id="sound-toggle" type="button" class="secondary" aria-pressed="false">🔊 効果音</button>
+          <label>音量 <input id="sound-volume" type="range" min="0" max="1" step="0.1" value="0.7"></label>
           <button id="open-rules" type="button" class="secondary">遊び方・ルール</button>
         </div>
         <div id="message" class="message" role="status" aria-live="polite" aria-atomic="true">先手の番です。駒を選んでください。</div>
+        <div id="end-actions" class="end-actions" hidden>
+          <button id="new-game" type="button">もう一度対局する</button>
+        </div>
         <section class="log-panel" aria-label="直近の対局ログ">
           <h2>直近5手</h2>
           <ol id="move-log" class="move-log"></ol>
@@ -57,6 +63,7 @@
           <li><span class="chip water">💧 水</span>火に勝ち、風に負ける</li>
           <li><span class="chip wind"><img src="tornado.svg?v=2" alt="">風</span>水に勝ち、火に負ける</li>
         </ul>
+        <p class="result-legend"><span>有利</span><span>不利</span><span>同</span><span>援</span> 移動候補には文字でも結果を表示します。</p>
 
         <h3>王の特殊ルール</h3>
         <ul class="king-rules">
@@ -123,7 +130,17 @@
       </form>
     </dialog>
 
-    <script src="game-core.js?v=5"></script>
-    <script src="app.js?v=25"></script>
+    <dialog id="promotion-dialog" class="promotion-dialog" aria-labelledby="promotion-piece">
+      <h2 id="promotion-piece">駒を成りますか？</h2>
+      <p>成ると駒の動きが変わります。属性は変化しません。</p>
+      <div>
+        <button id="promote-yes" type="button">成る</button>
+        <button id="promote-no" type="button" class="secondary">成らない</button>
+      </div>
+    </dialog>
+
+    <footer class="app-footer">属性将棋 Ver0.1.0-beta.1</footer>
+    <script src="game-core.js?v=7"></script>
+    <script src="app.js?v=27"></script>
   </body>
 </html>

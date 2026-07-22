@@ -129,6 +129,17 @@
           soundEnabled=false;updateSoundButton();
           check('ミュート状態を画面へ反映',document.getElementById('sound-toggle').textContent.includes('ミュート'));
           soundEnabled=true;cpuDifficulty='normal';
+          check('音量調整UIを表示',document.getElementById('sound-volume')?.type==='range');
+          state=initialState();renderBoard();const firstSquare=document.querySelector('.square[data-x="0"][data-y="0"]');firstSquare.focus();
+          firstSquare.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));
+          check('矢印キーで盤面フォーカスを移動',document.activeElement?.dataset.x==='1'&&document.activeElement?.dataset.y==='0');
+          state.moves=[{x:4,y:4,result:'retaliation'}];renderBoard();
+          check('戦闘候補を文字でも表示',document.querySelector('.move-result-badge')?.textContent==='不利');
+          check('再対局ボタンを用意',Boolean(document.getElementById('new-game')));
+          check('PWAマニフェストを設定',document.querySelector('link[rel="manifest"]')?.getAttribute('href')==='manifest.webmanifest');
+          state=initialState();const promotionPiece=piece('pawn','white');promotionPrompt(promotionPiece);
+          check('成り確認をゲーム内ダイアログで表示',document.getElementById('promotion-dialog').open);
+          document.getElementById('promote-no').click();
           const counts={king:8,rook:16,bishop:16,gold:6,silver:5,knight:2,lance:4,pawn:1};
           let movement=true;
           for(const [type,expected] of Object.entries(counts)){

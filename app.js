@@ -1,7 +1,21 @@
 let replayIndex=null,lastSoundSnapshot=-1,audioContext=null;
 let soundEnabled=localStorage.getItem("attributeShogiSound")!=="off";
+let soundVolume=Number(localStorage.getItem("attributeShogiVolume")??.7);
 cpuDifficulty=localStorage.getItem("attributeShogiDifficulty")||"normal";
-promotionPrompt=p=>window.confirm(`${PIECES[p.type].symbol}を成りますか？`);
+promotionPrompt=p=>new Promise(resolve=>{
+  const dialog=document.getElementById("promotion-dialog");
+  document.getElementById("promotion-piece").textContent=`${PIECES[p.type].symbol}を成りますか？`;
+  state.aiThinking=true;
+  const decide=value=>{
+    dialog.close();
+    state.aiThinking=false;
+    resolve(value);
+  };
+  document.getElementById("promote-yes").onclick=()=>decide(true);
+  document.getElementById("promote-no").onclick=()=>decide(false);
+  dialog.oncancel=e=>{e.preventDefault();decide(false)};
+  dialog.showModal();
+});
 
 const shownState=()=>replayIndex===null?state:state.snapshots[replayIndex]?.position||state;
 
@@ -16,7 +30,7 @@ function playMoveSound(lastMove,tone){
   oscillator.type=lastMove.kind==="support"?"triangle":"sine";
   oscillator.frequency.setValueAtTime(frequency,now);
   gain.gain.setValueAtTime(.0001,now);
-  gain.gain.exponentialRampToValueAtTime(.09,now+.018);
+  gain.gain.exponentialRampToValueAtTime(Math.max(.001,.09*soundVolume),now+.018);
   gain.gain.exponentialRampToValueAtTime(.0001,now+.16);
   oscillator.connect(gain).connect(audioContext.destination);
   oscillator.start(now);
@@ -93,7 +107,7 @@ function renderBoard(){
     if(last?.from?.x===x&&last.from.y===y)b.classList.add("last-move-from");
     if(last?.to.x===x&&last.to.y===y){
       b.classList.add("last-move-to");
-      if(recent)b.classList.add("recent-move");
+      if(recent)b.classList.add("recent-move",`effect-${shown.tone||"info"}`);
     }
     if(replayIndex===null&&state.selected?.kind==="board"&&state.selected.x===x&&state.selected.y===y)b.classList.add("selected");
     const m=replayIndex===null&&state.moves.find(v=>v.x===x&&v.y===y);
@@ -115,6 +129,13 @@ function renderBoard(){
       badge.textContent=last.badge;
       b.appendChild(badge);
     }
+    if(m&&m.result!=="move"){
+      const resultBadge=document.createElement("span"),labels={capture:"有利",retaliation:"不利",same:"同",support:"援"};
+      resultBadge.className=`move-result-badge result-${m.result}`;
+      resultBadge.textContent=labels[m.result]||"";
+      b.appendChild(resultBadge);
+      b.setAttribute("aria-label",`${coord(x,y)} ${labels[m.result]||"移動"}`);
+    }else b.setAttribute("aria-label",`${coord(x,y)}${p?` ${symbol(p)} ${ATTRIBUTE_DATA[p.attr].label}属性`:" 空きマス"}`);
     el.appendChild(b);
   }));
   appendMoveArrow(el,last,recent);
@@ -206,6 +227,7 @@ function render(){
   const msg=document.getElementById("message");
   msg.textContent=replayIndex!==null?"過去局面を表示中です。現在局面へ戻ると対局を再開できます。":state.message;
   msg.className=`message ${replayIndex!==null?"info":state.tone}`;
+  document.getElementById("end-actions").hidden=!state.winner;
 }
 
 function bind(){
@@ -221,6 +243,14 @@ function bind(){
   document.getElementById("replay-prev").addEventListener("click",()=>showReplay((replayIndex===null?state.snapshots.length-1:replayIndex)-1));
   document.getElementById("replay-next").addEventListener("click",()=>showReplay(replayIndex+1));
   document.getElementById("replay-current").addEventListener("click",returnToCurrent);
+  document.getElementById("board").addEventListener("keydown",e=>{
+    const square=e.target.closest(".square");
+    if(!square||!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key))return;
+    e.preventDefault();
+    const dx=e.key==="ArrowLeft"?-1:e.key==="ArrowRight"?1:0,dy=e.key==="ArrowUp"?-1:e.key==="ArrowDown"?1:0;
+    const x=Math.max(0,Math.min(8,+square.dataset.x+dx)),y=Math.max(0,Math.min(8,+square.dataset.y+dy));
+    document.querySelector(`.square[data-x="${x}"][data-y="${y}"]`)?.focus();
+  });
   const difficulty=document.getElementById("cpu-difficulty");
   difficulty.value=cpuDifficulty;
   difficulty.addEventListener("change",()=>{
@@ -232,12 +262,19 @@ function bind(){
     localStorage.setItem("attributeShogiSound",soundEnabled?"on":"off");
     updateSoundButton();
   });
+  const volume=document.getElementById("sound-volume");
+  volume.value=String(soundVolume);
+  volume.addEventListener("input",()=>{
+    soundVolume=Number(volume.value);
+    localStorage.setItem("attributeShogiVolume",String(soundVolume));
+  });
   const dialog=document.getElementById("rules-dialog"),skip=document.getElementById("skip-tutorial");
   document.getElementById("open-rules").addEventListener("click",()=>dialog.showModal());
   dialog.addEventListener("close",()=>{
     if(skip.checked)localStorage.setItem("attributeShogiTutorialSeen","yes");
   });
   updateSoundButton();
+  document.getElementById("new-game").addEventListener("click",()=>document.getElementById("reset").click());
 }
 
 async function bootstrap(){
@@ -250,8 +287,15 @@ async function bootstrap(){
     render();
     if(localStorage.getItem("attributeShogiTutorialSeen")!=="yes")document.getElementById("rules-dialog").showModal();
   }catch(e){
-    document.getElementById("message").textContent=`起動エラー: ${e.message}。HTTPサーバーから開いてください。`;
+    const message=document.getElementById("message");
+    message.textContent=`起動エラー: ${e.message}。HTTPサーバーから開いてください。`;
+    message.className="message error";
+    const retry=document.createElement("button");
+    retry.textContent="再読み込み";
+    retry.onclick=()=>location.reload();
+    message.append(" ",retry);
   }
 }
 
 document.addEventListener("DOMContentLoaded",bootstrap);
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js").catch(()=>{}));
