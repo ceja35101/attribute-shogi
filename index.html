@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
     <title>属性付き将棋</title>
-    <link rel="stylesheet" href="styles.css?v=24" />
+    <link rel="stylesheet" href="styles.css?v=25" />
   </head>
   <body>
     <main class="app-shell">
@@ -20,6 +20,12 @@
         <section class="log-panel" aria-label="直近の対局ログ">
           <h2>直近5手</h2>
           <ol id="move-log" class="move-log"></ol>
+          <div class="replay-controls" aria-label="棋譜再生">
+            <button id="replay-prev" type="button" class="secondary">◀ 前の手</button>
+            <span id="replay-status">現在局面</span>
+            <button id="replay-next" type="button" class="secondary">次の手 ▶</button>
+            <button id="replay-current" type="button" class="secondary">現在局面へ戻る</button>
+          </div>
         </section>
         <div class="board-frame">
           <div id="cpu-stock" class="stock stock-top"></div>
@@ -68,11 +74,12 @@
           <li>緑は有利、赤は不利、黄は同属性、水色は援軍勝利です。持ち駒は盤の下から選べます。</li>
           <li>同属性は衝突マスを6ターン封鎖します。盤上の強属性駒を前後へ移動すると制圧できます。</li>
           <li>持ち駒を援軍位置へ直接打つことはできません。衝突後に打った駒も、その衝突の援軍にはできません。</li>
+          <li>青紫の点線枠が直前の移動元、実線枠が移動先です。ログまたは前後ボタンで過去局面を確認できます。</li>
         </ol>
       </aside>
     </main>
 
-    <script src="game-core.js?v=3"></script>
-    <script src="app.js?v=23"></script>
+    <script src="game-core.js?v=4"></script>
+    <script src="app.js?v=24"></script>
   </body>
 </html>

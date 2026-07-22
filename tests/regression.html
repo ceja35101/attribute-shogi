@@ -111,6 +111,16 @@
           damagedKing.attr='fire';damagedKing.weakHits=1;secondAttacker.attr='wind';otherKing.attr='fire';state.board[4][4]=damagedKing;state.board[5][4]=secondAttacker;state.board[8][0]=otherKing;
           execute({kind:'board',fromX:4,fromY:5,x:4,y:4,result:'capture'},true);
           check('王は弱属性攻撃2回目で敗北',state.winner==='white');
+          state=initialState();recordSnapshot();
+          state.ply=1;addLog('歩 : 1-7 → 1-6');recordSnapshot();
+          check('直前手の移動元と移動先を記録',state.lastMove.from.x===0&&state.lastMove.from.y===6&&state.lastMove.to.x===0&&state.lastMove.to.y===5);
+          check('着手ごとの局面スナップショットを保存',state.snapshots.length===2&&state.log[0].snapshotIndex===1);
+          trackLastMove('角 : 持ち駒 → 5-5','white');
+          check('駒打ちに打マークを記録',state.lastMove.kind==='drop'&&state.lastMove.badge==='打'&&state.lastMove.from===null);
+          state=initialState();trackLastMove('歩 : 1-7 → 1-6','white');renderBoard();
+          check('盤面に直前手の2マスを強調表示',document.querySelectorAll('.last-move-from').length===1&&document.querySelectorAll('.last-move-to').length===1);
+          recordSnapshot();state.ply=1;addLog('歩 : 1-7 → 1-6');recordSnapshot();showReplay(0);
+          check('棋譜再生と現在局面への復帰',replayIndex===0&&shownState().ply===0&&(returnToCurrent(),replayIndex===null));
           const counts={king:8,rook:16,bishop:16,gold:6,silver:5,knight:2,lance:4,pawn:1};
           let movement=true;
           for(const [type,expected] of Object.entries(counts)){
