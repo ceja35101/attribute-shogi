@@ -24,6 +24,8 @@ python -m http.server 8000
 
 CPU自己対戦は `http://localhost:8000/tests/self-play.html` を開くと100局を自動実行します。
 
+初期化500回とCPU自己対戦50局の耐久テストは `http://localhost:8000/tests/durability.html` で実行できます。
+
 ## ルール
 
 現在の実装に対応する全文は [RULES.md](RULES.md) を参照してください。

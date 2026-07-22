@@ -148,6 +148,15 @@
             movement&&=rawMoves(p,4,4,state.board).length===expected;
           }
           check('全駒の基本移動数',movement);
+          state=initialState();state.board=Array.from({length:9},()=>Array(9).fill(null));state.clashes=[];
+          const tacticalKingW=piece('king','white'),tacticalKingB=piece('king','black'),exposedGold=piece('gold','white'),enemyRook=piece('rook','black');
+          tacticalKingW.attr=tacticalKingB.attr='water';exposedGold.attr='wind';enemyRook.attr='fire';
+          state.board[8][0]=tacticalKingW;state.board[0][8]=tacticalKingB;state.board[5][4]=exposedGold;state.board[3][4]=enemyRook;
+          const exposedMove={kind:'board',fromX:4,fromY:5,x:4,y:4,result:'move'};
+          check('むずかしいCPUは次手で失う駒価値を評価',nextMoveLoss(exposedMove,'white')===PIECES.gold.value,String(nextMoveLoss(exposedMove,'white')));
+          state.clashes=[{x:2,y:2,attr:'wind',pieces:[],support:[{x:2,y:3}],startedAt:0,expiresAt:2}];state.ply=1;
+          const helper=piece('gold','white');helper.attr='fire';helper.boardSince=0;state.board[4][2]=helper;
+          check('むずかしいCPUは期限間近の援軍を加点',hardTacticalScore({kind:'board',fromX:2,fromY:4,x:2,y:3,result:'support'},'white')>=3000);
           state=initialState();
           check('初期局面を終局扱いしない',resolveNoLegalMoves()===false&&state.winner===null);
           return checks;

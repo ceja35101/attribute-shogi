@@ -134,7 +134,8 @@ button.secondary {
 .end-actions[hidden] { display: none; }
 
 .rules-dialog {
-  width: min(720px, calc(100% - 32px));
+  width: 720px;
+  max-width: calc(100vw - 32px);
   max-height: calc(100vh - 32px);
   border: 1px solid rgba(255,255,255,.2);
   border-radius: 16px;
@@ -204,7 +205,8 @@ button.secondary {
 }
 
 .promotion-dialog {
-  width: min(420px,calc(100% - 32px));
+  width: 420px;
+  max-width: calc(100vw - 32px);
   border: 1px solid rgba(255,255,255,.25);
   border-radius: 14px;
   padding: 22px;
@@ -796,8 +798,16 @@ button.secondary {
 }
 
 @media (max-width: 560px) {
+  body { padding: 8px; place-items: start center; }
+  .app-shell { min-width: 0; gap: 12px; }
+  .panel { min-width: 0; padding: 14px; border-radius: 14px; }
   .tutorial-grid { grid-template-columns: 1fr; }
-  .rules-dialog form { padding: 14px; }
+  .rules-dialog { max-width: calc(100vw - 16px); }
+  .rules-dialog form { padding: 12px; }
+  .rules-dialog-header { gap: 8px; }
+  .rules-dialog-header h2 { font-size: 1.25rem; }
+  .tutorial-grid section { padding: 10px; }
+  .tutorial-grid p { font-size: .82rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

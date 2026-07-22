@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>属性将棋 耐久テスト</title>
+  <style>
+    body{font-family:system-ui,sans-serif;max-width:900px;margin:32px auto;padding:0 16px;background:#111827;color:#f9fafb}
+    iframe{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+    pre{white-space:pre-wrap;padding:16px;border-radius:10px;background:#1f2937;border-left:5px solid #60a5fa}
+    .pass{border-left-color:#22c55e}.fail{border-left-color:#ef4444}
+  </style>
+</head>
+<body>
+  <h1>属性将棋 耐久テスト</h1>
+  <p id="status">ゲームを読み込んでいます…</p>
+  <pre id="report">待機中</pre>
+  <iframe id="game" src="../index.html" title="テスト対象"></iframe>
+  <script>
+    const frame=document.getElementById('game'),status=document.getElementById('status'),report=document.getElementById('report');
+    frame.addEventListener('load',()=>setTimeout(run,300));
+    function run(){
+      status.textContent='初期化500回と自己対戦50局を実行しています…';
+      setTimeout(()=>{
+        try{
+          const result=frame.contentWindow.eval(`(()=>{
+            const started=performance.now(),errors=[];let resetPass=0,minMoves=Infinity,maxAttrGap=0;
+            for(let i=0;i<500;i++)try{
+              const s=initialState(),pieces=s.board.flat().filter(Boolean),counts=Object.values(pieces.reduce((a,p)=>(a[p.attr]=(a[p.attr]||0)+1,a),{}));
+              const previous=state;state=s;const moves=allMoves(s.turn);state=previous;
+              minMoves=Math.min(minMoves,moves.length);maxAttrGap=Math.max(maxAttrGap,Math.max(...counts)-Math.min(...counts));
+              if(pieces.length===40&&moves.length>0&&counts.length===3&&Math.max(...counts)-Math.min(...counts)<=1)resetPass++;
+            }catch(error){errors.push('reset '+(i+1)+': '+error.message)}
+            const games=runSelfPlayGames(50,250);if(games.errors.length)errors.push(...games.errors.map(e=>'game '+e.game+': '+e.message));
+            return{resetPass,minMoves,maxAttrGap,games,errors,elapsedMs:Math.round(performance.now()-started)};
+          })()`);
+          const pass=result.resetPass===500&&result.errors.length===0&&result.games.games===50;
+          report.className=pass?'pass':'fail';
+          report.textContent=JSON.stringify(result,null,2);
+          status.textContent=pass?'PASS: 耐久テスト完了':'FAIL: エラーを確認してください';
+          document.title=(pass?'PASS':'FAIL')+' - 属性将棋 耐久テスト';
+        }catch(error){report.className='fail';report.textContent=error.stack;status.textContent='FAIL';document.title='FAIL - 属性将棋 耐久テスト'}
+      },20);
+    }
+  </script>
+</body>
+</html>
