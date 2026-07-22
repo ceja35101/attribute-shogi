@@ -323,7 +323,7 @@ function bind(){
   const resignDialog=document.getElementById("resign-dialog");
   document.getElementById("resign").addEventListener("click",()=>{if(!state.winner&&state.turn===HUMAN&&!state.aiThinking)resignDialog.showModal()});
   document.getElementById("resign-yes").addEventListener("click",()=>{
-    resignDialog.close();state.winner=CPU;state.selected=null;state.moves=[];state.message="あなたが投了しました。CPUの勝利です。";state.tone="success";addLog("先手 投了",HUMAN);render();
+    resignDialog.close();state.winner=CPU;state.selected=null;state.moves=[];state.message=`あなたが投了しました。${resultForViewer(CPU)}`;state.tone="success";addLog("先手 投了",HUMAN);render();
   });
   document.getElementById("resign-no").addEventListener("click",()=>resignDialog.close());
 }

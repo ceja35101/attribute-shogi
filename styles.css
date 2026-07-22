@@ -401,7 +401,7 @@ button.danger:hover { background: #991b1b; }
 .hand-piece-symbol {
   position: relative;
   z-index: 2;
-  font-size: 1.45rem;
+  font-size: calc(1.45rem - 2px);
   font-weight: 900;
   line-height: 1;
   color: #000;
@@ -673,7 +673,7 @@ button.danger:hover { background: #991b1b; }
     0 2px 2px rgba(0, 0, 0, 0.8);}
 
 .piece .piece-symbol.flipped {
-  transform: none;
+  transform: translateY(9%);
 }
 
 .piece:has(.attr-wind) .piece-symbol {
@@ -920,8 +920,9 @@ body {
 }
 
 .piece .piece-symbol {
-  font-size: clamp(1.15rem, 2.1vw, 2rem);
+  font-size: clamp(calc(1.15rem - 2px), calc(2.1vw - 2px), calc(2rem - 2px));
   white-space: nowrap;
+  transform: translateY(9%);
   color: #21170d;
   font-family: inherit;
   font-weight: 900;
@@ -960,7 +961,75 @@ button.secondary { background: #263449; border: 1px solid rgba(255,255,255,.09);
 .hand-piece-symbol {
   color: #21170d;
   font-family: inherit;
+  transform: translateY(8%);
   text-shadow: 0 1px 0 rgba(255,255,255,.85), 0 2px 2px rgba(70,38,8,.35);
+}
+
+/* 属性色の木札と、文字に重ならない小型の属性紋章 */
+.piece:has(.attr-fire),
+.hand-piece-icon:has(.attr-fire) {
+  background: linear-gradient(145deg, #f3d09d 0%, #dfa06f 62%, #bd704d 100%) !important;
+}
+
+.piece:has(.attr-water),
+.hand-piece-icon:has(.attr-water) {
+  background: linear-gradient(145deg, #e1d6b9 0%, #afc6c3 62%, #789fa1 100%) !important;
+}
+
+.piece:has(.attr-wind),
+.hand-piece-icon:has(.attr-wind) {
+  background: linear-gradient(145deg, #e5d8ae 0%, #bdc59a 62%, #84936b 100%) !important;
+}
+
+.piece .attr {
+  left: 50%;
+  top: 14%;
+  width: 28%;
+  height: 21%;
+  overflow: hidden;
+  border: 1px solid rgba(69, 47, 23, .38);
+  border-radius: 999px;
+  background: rgba(255, 249, 232, .84) !important;
+  opacity: 1;
+  filter: none;
+  box-shadow: 0 1px 2px rgba(60, 35, 12, .28), inset 0 1px rgba(255,255,255,.75);
+}
+
+.piece .attr-fire,
+.piece .attr-water,
+.piece .attr-wind { transform: translate(-50%, -50%); opacity: 1; }
+
+.piece.black .attr-fire,
+.piece.black .attr-water,
+.piece.black .attr-wind {
+  left: 50%;
+  top: 14%;
+  transform: translate(-50%, -50%) rotate(180deg);
+  opacity: 1;
+}
+
+.piece .attr img { width: 84%; height: 84%; }
+.piece .attr-fire img { transform: scale(1.12); }
+
+.hand-piece-attr {
+  inset: 4% auto auto 50%;
+  width: 30%;
+  height: 21%;
+  overflow: hidden;
+  transform: translateX(-50%);
+  border: 1px solid rgba(69, 47, 23, .38);
+  border-radius: 999px;
+  background: rgba(255, 249, 232, .84) !important;
+  opacity: 1;
+  filter: none;
+  box-shadow: 0 1px 2px rgba(60, 35, 12, .25);
+}
+
+.hand-piece-attr img { width: 84%; height: 84%; }
+.hand-piece-attr.attr-fire img { transform: scale(1.12); }
+
+.hand-piece-icon.black .hand-piece-attr {
+  inset: 4% auto auto 50%;
 }
 
 .play-sidebar {
