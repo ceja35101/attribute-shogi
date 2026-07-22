@@ -19,7 +19,8 @@
   <script>
     const frame=document.getElementById("game");let started=false;
     function startWhenReady(){if(started)return;const count=frame.contentDocument?.querySelectorAll('.square').length||0;document.getElementById('summary').textContent=`ゲームを読み込んでいます… (${count}/81)`;if(count===81){started=true;setTimeout(run,100);return}setTimeout(startWhenReady,100)}
-    frame.addEventListener("load",startWhenReady);frame.src="../index.html";startWhenReady();
+    localStorage.setItem("attributeShogiTutorialSeen","yes");localStorage.removeItem("attributeShogiSavedGame");
+    frame.addEventListener("load",startWhenReady);frame.src="../index.html?regression=rc1";startWhenReady();
     function run(){
       let report;
       try{
@@ -49,13 +50,13 @@
           const supportedKings=[piece('king','white'),piece('king','black')];supportedKings.forEach(p=>p.attr='wind');
           state.clashes=[{x:4,y:4,attr:'wind',pieces:supportedKings,attackerColor:'white',support:[{x:4,y:3},{x:4,y:5}],startedAt:0,expiresAt:5}];
           const support=piece('gold','black');support.attr='fire';state.board[3][4]=support;
-          const supportMessage=resolveBySupport(support,4,3);
+          const supportMessage=resolveExistingSupport(state.clashes[0]);
           check('王同士の膠着は先着援軍側が勝利',state.winner==='black'&&state.clashes.length===0&&supportMessage.includes('敗北'));
           state=initialState();state.board=Array.from({length:9},()=>Array(9).fill(null));const rescuedKing=piece('king','black'),sameKingAttacker=piece('silver','white'),kingSideSupport=piece('gold','black');rescuedKing.attr=sameKingAttacker.attr='wind';kingSideSupport.attr='fire';
-          state.clashes=[{x:4,y:4,attr:'wind',pieces:[sameKingAttacker,rescuedKing],attackerColor:'white',support:[{x:4,y:3},{x:4,y:5}],startedAt:0,expiresAt:5}];state.board[3][4]=kingSideSupport;const rescueMessage=resolveBySupport(kingSideSupport,4,3);
+          state.clashes=[{x:4,y:4,attr:'wind',pieces:[sameKingAttacker,rescuedKing],attackerColor:'white',support:[{x:4,y:3},{x:4,y:5}],startedAt:0,expiresAt:5}];state.board[3][4]=kingSideSupport;const rescueMessage=resolveExistingSupport(state.clashes[0]);
           check('王側の強属性援軍は無傷救出し攻撃駒を取得',rescuedKing.weakHits===0&&state.board[4][4]===rescuedKing&&state.hand.black.some(p=>p.type==='silver')&&rescueMessage.includes('救出'));
           state=initialState();state.board=Array.from({length:9},()=>Array(9).fill(null));const defeatedKing=piece('king','black'),supportedAttacker=piece('silver','white'),attackerSupport=piece('gold','white');defeatedKing.attr=supportedAttacker.attr='wind';attackerSupport.attr='fire';
-          state.clashes=[{x:4,y:4,attr:'wind',pieces:[supportedAttacker,defeatedKing],attackerColor:'white',support:[{x:4,y:3},{x:4,y:5}],startedAt:0,expiresAt:5}];state.board[3][4]=attackerSupport;const attackerWinMessage=resolveBySupport(attackerSupport,4,3);
+          state.clashes=[{x:4,y:4,attr:'wind',pieces:[supportedAttacker,defeatedKing],attackerColor:'white',support:[{x:4,y:3},{x:4,y:5}],startedAt:0,expiresAt:5}];state.board[3][4]=attackerSupport;const attackerWinMessage=resolveExistingSupport(state.clashes[0]);
           check('攻撃側の強属性援軍は王へ即勝利',state.winner==='white'&&attackerWinMessage.includes('勝利しました'));
           state=initialState();
           const handSupport=piece('gold','white');handSupport.attr='fire';state.hand.white=[handSupport];
@@ -74,7 +75,8 @@
           renderBoard();check('膠着中は強属性援軍位置を常時表示',document.querySelectorAll('.support-slot-badge').length===2);
           const sameSupport=piece('gold','white'),weakSupport=piece('gold','white');sameSupport.attr='wind';weakSupport.attr='water';sameSupport.boardSince=weakSupport.boardSince=0;
           state.board[3][3]=sameSupport;
-          check('援軍位置へ進入できるのは強属性だけ',!boardMoves(sameSupport,3,3).some(m=>m.x===4&&m.y===3)&&!rawMoves(weakSupport,3,3,state.board).some(m=>m.x===4&&m.y===3));
+          const contested={id:'test-contested',x:4,y:4,attr:'wind',pieces:[],attackerColor:'white',support:[{x:4,y:3},{x:4,y:5}],startedAt:0,expiresAt:6},whiteSupport=piece('gold','white'),blackSupport=piece('gold','black');whiteSupport.attr=blackSupport.attr='fire';state.clashes=[contested];state.board[3][4]=whiteSupport;state.board[5][4]=blackSupport;const contestedMessage=resolveExistingSupport(contested),lockedAfterReentry=resolveBySupport(whiteSupport,4,3)===null;state.selected={kind:'board',x:4,y:3};state.moves=boardMoves(whiteSupport,4,3);renderBoard();const supportStateVisible=document.querySelectorAll('.support-used-badge').length===2&&document.querySelectorAll('.support-unavailable').length===2&&document.querySelector('.clash-id')?.textContent==='衝1';
+          check('援軍可否を盤面表示し、両陣営の既存援軍は相殺して再利用不可',!rawMoves(weakSupport,3,3,state.board).some(m=>m.x===4&&m.y===3)&&contestedMessage.includes('相殺')&&state.clashes.includes(contested)&&lockedAfterReentry&&supportStateVisible);
           const handIcon=handPieceHtml(boardSupport,'white');
           check('持ち駒アイコンに駒種と属性を表示',handIcon.includes('hand-piece-symbol')&&handIcon.includes('金')&&handIcon.includes('attr-fire'));
           state=initialState();state.board=Array.from({length:9},()=>Array(9).fill(null));state.clashes=[];
@@ -140,7 +142,8 @@
           for(let i=2;i<=8;i++){state.ply=i;addLog('歩 : 1-'+i+' → 1-'+(i+1))}
           check('表示5手とは別に全手棋譜を保持',state.log.length===5&&state.fullLog.length===8);
           saveGame();const restored=restoreGame();
-          check('対局を保存して復元',restored?.ply===8&&restored.fullLog.length===8&&restored.aiThinking===false);
+          localStorage.setItem(SAVE_KEY,'{broken');saveNotice='';const rejectedSave=restoreGame(),invalidBackup=localStorage.getItem(INVALID_SAVE_KEY);localStorage.removeItem(INVALID_SAVE_KEY);saveGame();
+          check('対局を保存・復元し破損データを退避',restored?.ply===8&&restored.fullLog.length===8&&restored.aiThinking===false&&rejectedSave===null&&Boolean(invalidBackup)&&saveNotice.includes('退避'));
           trackLastMove('角 : 持ち駒 → 5-5','white');
           check('駒打ちに打マークを記録',state.lastMove.kind==='drop'&&state.lastMove.badge==='打'&&state.lastMove.from===null);
           state=initialState();trackLastMove('歩 : 1-7 → 1-6','white');renderBoard();
@@ -189,7 +192,7 @@
           const usefulSacrifice={kind:'board',fromX:4,fromY:5,x:4,y:4,result:'retaliation'},usefulScore=retaliationTradeScore(usefulSacrifice,'white');
           state.board[5][4]=piece('gold','white');state.board[4][4]=piece('pawn','black');state.board[5][4].attr='water';state.board[4][4].attr='wind';
           const wastefulScore=retaliationTradeScore(usefulSacrifice,'white');
-          check('むずかしいCPUは駒損と戦略的な返り討ちを評価',exposedLoss===PIECES.gold.value&&usefulScore>0&&wastefulScore<0,`${exposedLoss}/${usefulScore}/${wastefulScore}`);
+          check('むずかしいCPUは駒損と戦略的な返り討ちを評価',exposedLoss===PIECES.gold.value&&usefulScore>0&&wastefulScore<0,String(exposedLoss)+'/'+String(usefulScore)+'/'+String(wastefulScore));
           state.clashes=[{x:2,y:2,attr:'wind',pieces:[],support:[{x:2,y:3}],startedAt:0,expiresAt:2}];state.ply=1;
           const helper=piece('gold','white');helper.attr='fire';helper.boardSince=0;state.board[4][2]=helper;
           check('むずかしいCPUは期限間近の援軍を加点',hardTacticalScore({kind:'board',fromX:2,fromY:4,x:2,y:3,result:'support'},'white')>=3000);

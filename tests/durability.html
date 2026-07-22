@@ -19,7 +19,8 @@
   <script>
     const frame=document.getElementById('game'),status=document.getElementById('status'),report=document.getElementById('report');let started=false;
     function startWhenReady(){if(started)return;if(frame.contentDocument?.querySelectorAll('.square').length===81){started=true;setTimeout(run,100);return}setTimeout(startWhenReady,100)}
-    frame.addEventListener('load',startWhenReady);frame.src='../index.html';startWhenReady();
+    localStorage.setItem('attributeShogiTutorialSeen','yes');localStorage.removeItem('attributeShogiSavedGame');
+    frame.addEventListener('load',startWhenReady);frame.src='../index.html?durability=rc1';startWhenReady();
     function run(){
       status.textContent='初期化500回と自己対戦50局を実行しています…';
       setTimeout(()=>{

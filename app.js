@@ -1,4 +1,4 @@
-const SAVE_KEY="attributeShogiSavedGame",SAVE_VERSION=2;
+const APP_VERSION="0.1.0-rc.1",SAVE_KEY="attributeShogiSavedGame",SAVE_VERSION=2,INVALID_SAVE_KEY=`${SAVE_KEY}InvalidBackup`;
 let replayIndex=null,lastSoundSnapshot=-1,audioContext=null,saveNotice="";
 let soundEnabled=localStorage.getItem("attributeShogiSound")!=="off";
 let soundVolume=Number(localStorage.getItem("attributeShogiVolume")??.7);
@@ -32,13 +32,21 @@ function saveGame(){
 }
 
 function restoreGame(){
+  const raw=localStorage.getItem(SAVE_KEY);
+  if(!raw)return null;
+  const reject=(reason)=>{
+    saveNotice=`保存対局を復元できませんでした（${reason}）。データを退避して新しい対局を開始しました。`;
+    try{localStorage.setItem(INVALID_SAVE_KEY,JSON.stringify({savedAt:new Date().toISOString(),reason,raw}));localStorage.removeItem(SAVE_KEY)}catch(error){}
+    return null;
+  };
   try{
-    const saved=JSON.parse(localStorage.getItem(SAVE_KEY)||"null"),s=saved?.state;
-    if(saved?.version!==SAVE_VERSION||!Array.isArray(s?.board)||s.board.length!==9||!s.board.every(row=>Array.isArray(row)&&row.length===9))return null;
+    const saved=JSON.parse(raw),s=saved?.state;
+    if(saved?.version!==SAVE_VERSION)return reject(`保存形式 ${saved?.version??"不明"}`);
+    if(!Array.isArray(s?.board)||s.board.length!==9||!s.board.every(row=>Array.isArray(row)&&row.length===9))return reject("盤面データ破損");
     const pieces=[...s.board.flat().filter(Boolean),...(s.hand?.white||[]),...(s.hand?.black||[])];
-    if(!s.hand||!s.clashes||!pieces.every(p=>PIECES[p.type]&&ATTRIBUTE_DATA[p.attr]))return null;
+    if(!s.hand||!Array.isArray(s.clashes)||!pieces.every(p=>PIECES[p.type]&&ATTRIBUTE_DATA[p.attr]))return reject("駒または衝突データ破損");
     return{...s,selected:null,moves:[],aiThinking:false,autoPlay:false,fullLog:Array.isArray(s.fullLog)?s.fullLog:[],log:Array.isArray(s.log)?s.log:[],snapshots:Array.isArray(s.snapshots)?s.snapshots:[],history:Array.isArray(s.history)?s.history:[]};
-  }catch(error){return null}
+  }catch(error){return reject("JSON破損")}
 }
 
 function exportRecord(){
@@ -49,7 +57,7 @@ function exportRecord(){
 }
 
 async function copyDiagnostics(){
-  const details=["属性将棋 診断情報","Version: 0.1.0-beta.3",`UserAgent: ${navigator.userAgent}`,`手数: ${state.ply}`,`手番: ${state.turn}`,`勝者: ${state.winner||"なし"}`,`衝突数: ${state.clashes.length}`,"直近ログ:",...state.log.map(item=>`${item.number}. ${item.text}`)].join("\n");
+  const details=["属性将棋 診断情報",`Version: ${APP_VERSION}`,`UserAgent: ${navigator.userAgent}`,`手数: ${state.ply}`,`手番: ${state.turn}`,`勝者: ${state.winner||"なし"}`,`衝突数: ${state.clashes.length}`,"直近ログ:",...state.log.map(item=>`${item.number}. ${item.text}`)].join("\n");
   try{await navigator.clipboard.writeText(details);state.message="診断情報をクリップボードへコピーしました。";state.tone="success"}catch(error){state.message="診断情報をコピーできませんでした。HTTPSまたはlocalhostで開いてください。";state.tone="error"}render();
 }
 
@@ -133,6 +141,10 @@ function renderBoard(){
     const b=document.createElement("button");
     const clash=shown.clashes.find(c=>c.x===x&&c.y===y);
     const supportSlot=shown.clashes.find(c=>c.support.some(slot=>slot.x===x&&slot.y===y));
+    const clashNumber=supportSlot?shown.clashes.indexOf(supportSlot)+1:0;
+    const lockedClashes=p?shown.clashes.filter(c=>c.id&&p.supportLocks?.includes(c.id)):[];
+    const selectedPiece=replayIndex===null&&state.selected?.kind==="board"?state.board[state.selected.y]?.[state.selected.x]:null;
+    const selectedLocked=supportSlot&&selectedPiece?.supportLocks?.includes(supportSlot.id);
     b.type="button";
     b.className=`square ${(x+y)%2?"dark":"light"}`;
     b.dataset.x=x;
@@ -144,7 +156,7 @@ function renderBoard(){
       b.classList.add("last-move-to");
       if(recent)b.classList.add("recent-move",`effect-${shown.tone||"info"}`);
     }
-    if(supportSlot)b.classList.add("support-slot");
+    if(supportSlot)b.classList.add("support-slot",selectedLocked?"support-unavailable":"support-available");
     if(replayIndex===null&&state.selected?.kind==="board"&&state.selected.x===x&&state.selected.y===y)b.classList.add("selected");
     const m=replayIndex===null&&state.moves.find(v=>v.x===x&&v.y===y);
     if(m)b.classList.add(m.result==="capture"?"capture-target":m.result==="retaliation"?"retaliation-target":m.result==="same"?"same-target":m.result==="support"?"support-target":"move-target");
@@ -155,10 +167,12 @@ function renderBoard(){
       if(clash.weakCollision)b.classList.add("weak-king-clash");
       b.disabled=true;
       b.title=`${clash.weakCollision?"王への弱属性短期膠着":`${clash.kingCollision?"王の":""}${ATTRIBUTE_DATA[clash.attr].label}属性衝突`}・残り${remaining}ターン`;
-      b.innerHTML=`<span class="clash-icon">${attributeIcon(clash.attr)}</span><span class="clash-pieces">${clash.pieces.map(q=>symbol(q)).join("×")}</span><span class="clash-turns">${remaining}</span>`;
+      b.innerHTML=`<span class="clash-id">衝${shown.clashes.indexOf(clash)+1}</span><span class="clash-icon">${attributeIcon(clash.attr)}</span><span class="clash-pieces">${clash.pieces.map(q=>symbol(q)).join("×")}</span><span class="clash-turns">${remaining}</span>`;
     }else if(p){
-      b.title=`${symbol(p)} / ${ATTRIBUTE_DATA[p.attr].label}属性${p.type==="king"?` / 耐久 ${4-(p.weakHits||0)}/4`:""}`;
-      b.innerHTML=`<span class="piece ${p.color}"><span class="piece-symbol ${p.color===CPU?"flipped":""}">${symbol(p)}</span><span class="attr attr-${p.attr}">${attributeIcon(p.attr)}</span>${p.type==="king"&&p.weakHits?`<span class="king-damage">${4-p.weakHits}/4</span>`:""}</span>`;
+      const lockText=lockedClashes.length?` / 衝突${lockedClashes.map(c=>shown.clashes.indexOf(c)+1).join("・")}への援軍権使用済み`:"";
+      b.title=`${symbol(p)} / ${ATTRIBUTE_DATA[p.attr].label}属性${p.type==="king"?` / 耐久 ${4-(p.weakHits||0)}/4`:""}${lockText}`;
+      const lockBadge=lockedClashes.length?`<span class="support-used-badge">援${lockedClashes.map(c=>shown.clashes.indexOf(c)+1).join("・")}×</span>`:"";
+      b.innerHTML=`<span class="piece ${p.color}"><span class="piece-symbol ${p.color===CPU?"flipped":""}">${symbol(p)}</span><span class="attr attr-${p.attr}">${attributeIcon(p.attr)}</span>${p.type==="king"&&p.weakHits?`<span class="king-damage">${4-p.weakHits}/4</span>`:""}${lockBadge}</span>`;
     }
     if(last?.to.x===x&&last.to.y===y&&last.badge){
       const badge=document.createElement("span");
@@ -172,8 +186,8 @@ function renderBoard(){
       resultBadge.textContent=labels[m.result]||"";
       b.appendChild(resultBadge);
       b.setAttribute("aria-label",`${coord(x,y)} ${labels[m.result]||"移動"}`);
-    }else b.setAttribute("aria-label",`${coord(x,y)}${p?` ${symbol(p)} ${ATTRIBUTE_DATA[p.attr].label}属性`:" 空きマス"}${supportSlot?" 強属性援軍位置":""}`);
-    if(supportSlot&&!clash){const marker=document.createElement("span");marker.className="support-slot-badge";marker.textContent="援";marker.setAttribute("aria-hidden","true");b.appendChild(marker)}
+    }else b.setAttribute("aria-label",`${coord(x,y)}${p?` ${symbol(p)} ${ATTRIBUTE_DATA[p.attr].label}属性`:" 空きマス"}${supportSlot?` 衝突${clashNumber}の強属性援軍位置${selectedLocked?"・選択中の駒は援軍権使用済み":""}`:""}`);
+    if(supportSlot&&!clash){const marker=document.createElement("span");marker.className="support-slot-badge";marker.textContent=`援${clashNumber}${selectedLocked?"×":""}`;marker.setAttribute("aria-hidden","true");b.appendChild(marker)}
     el.appendChild(b);
   }));
   appendMoveArrow(el,last,recent);
@@ -334,7 +348,8 @@ async function bootstrap(){
     if(!r.ok)throw Error("属性設定を読み込めません");
     ATTRIBUTE_DATA=await r.json();
     state=restoreGame()||initialState();
-    if(state.ply>0&&!state.winner){state.message=`保存した対局を${state.ply}手目から再開しました。`;state.tone="info"}
+    if(saveNotice){state.message=saveNotice;state.tone="warning"}
+    else if(state.ply>0&&!state.winner){state.message=`保存した対局を${state.ply}手目から再開しました。`;state.tone="info"}
     bind();
     render();
     if(localStorage.getItem("attributeShogiTutorialSeen")!=="yes")document.getElementById("rules-dialog").showModal();
