@@ -15,7 +15,7 @@
   <h1>属性将棋 回帰テスト</h1>
   <p id="summary">ゲームを読み込んでいます…</p>
   <ol id="results"></ol>
-  <iframe id="game" src="../index.html" title="テスト対象"></iframe>
+    <iframe id="game" src="../index.html" title="テスト対象"></iframe>
   <script>
     const frame=document.getElementById("game");
     frame.addEventListener("load",()=>setTimeout(run,300));
@@ -31,11 +31,82 @@
           check('盤面は9×9',state.board.length===9&&state.board.every(r=>r.length===9));
           check('初期駒は40枚',pieces.length===40,String(pieces.length));
           check('属性数は均等',Math.max(...Object.values(attrs))-Math.min(...Object.values(attrs))<=1,JSON.stringify(attrs));
+          const kings=pieces.filter(p=>p.type==='king');
+          check('両王は同じランダム属性',kings.length===2&&kings[0].attr===kings[1].attr,kings.map(p=>p.attr).join('/'));
           check('初期局面に合法手がある',allMoves('white').length>0,String(allMoves('white').length));
           check('火→風は有利',combat('fire','wind')==='capture');
           check('風→水は有利',combat('wind','water')==='capture');
           check('水→火は有利',combat('water','fire')==='capture');
           check('同属性は衝突',combat('fire','fire')==='same');
+          state=initialState();state.board=Array.from({length:9},()=>Array(9).fill(null));state.ply=0;
+          const royalKings=[piece('king','white'),piece('king','black')];royalKings.forEach(p=>p.attr='wind');
+          state.clashes=[{x:4,y:4,attr:'wind',pieces:royalKings,attackerColor:'white',support:[{x:4,y:3},{x:4,y:5}],expiresAt:1}];
+          const royalExpiry=advanceClashes();
+          check('王同士の膠着期限で攻撃側勝利',royalExpiry.royal===1&&state.winner==='white');
+          state=initialState();state.board=Array.from({length:9},()=>Array(9).fill(null));
+          const supportedKings=[piece('king','white'),piece('king','black')];supportedKings.forEach(p=>p.attr='wind');
+          state.clashes=[{x:4,y:4,attr:'wind',pieces:supportedKings,attackerColor:'white',support:[{x:4,y:3},{x:4,y:5}],expiresAt:5}];
+          const support=piece('gold','black');support.attr='fire';state.board[3][4]=support;
+          const supportMessage=resolveBySupport(support,4,3);
+          check('王同士の膠着は先着援軍側が勝利',state.winner==='black'&&state.clashes.length===0&&supportMessage.includes('勝利'));
+          state=initialState();
+          const handSupport=piece('gold','white');handSupport.attr='fire';state.hand.white=[handSupport];
+          state.clashes=[{x:4,y:4,attr:'wind',pieces:[],support:[{x:4,y:3},{x:4,y:5}],expiresAt:6}];
+          check('持ち駒を直接援軍にできない',!dropMoves(handSupport,0).some(m=>m.x===4&&(m.y===3||m.y===5)));
+          state=initialState();state.board=Array.from({length:9},()=>Array(9).fill(null));
+          const whiteKing=piece('king','white'),blackKing=piece('king','black'),boardSupport=piece('gold','white');
+          whiteKing.attr=blackKing.attr='water';boardSupport.attr='fire';
+          state.board[8][0]=whiteKing;state.board[0][8]=blackKing;state.board[3][3]=boardSupport;
+          state.clashes=[{x:4,y:4,attr:'wind',pieces:[],support:[{x:4,y:3},{x:4,y:5}],expiresAt:6}];
+          check('盤上の駒は援軍として移動できる',boardMoves(boardSupport,3,3).some(m=>m.x===4&&m.y===3&&m.result==='support'));
+          const handIcon=handPieceHtml(boardSupport,'white');
+          check('持ち駒アイコンに駒種と属性を表示',handIcon.includes('hand-piece-symbol')&&handIcon.includes('金')&&handIcon.includes('attr-fire'));
+          state=initialState();state.board=Array.from({length:9},()=>Array(9).fill(null));state.clashes=[];
+          const dropKingW=piece('king','white'),dropKingB=piece('king','black'),matePawn=piece('pawn','white');
+          dropKingW.attr=dropKingB.attr='water';matePawn.attr='wind';
+          state.board[8][0]=dropKingW;state.board[0][4]=dropKingB;state.hand.white=[matePawn];
+          state.clashes=[[3,0],[5,0],[3,1],[5,1]].map(([x,y])=>({x,y,attr:'fire',pieces:[],support:[],expiresAt:20}));
+          check('打ち歩詰めを禁止',!dropMoves(matePawn,0).some(m=>m.x===4&&m.y===1));
+          state.clashes=state.clashes.filter(c=>!(c.x===3&&c.y===0));
+          check('詰みでない歩打ちは許可',dropMoves(matePawn,0).some(m=>m.x===4&&m.y===1));
+          state=initialState();const repeated=positionKey();
+          state.history=[{key:repeated,actor:null,gaveCheck:false},{key:repeated,actor:'white',gaveCheck:false},{key:repeated,actor:'black',gaveCheck:false}];
+          check('同一局面4回で千日手',recordPosition('white',false)?.includes('引き分け')&&state.winner==='draw');
+          state=initialState();const checkedRepeat=positionKey();
+          state.history=[{key:checkedRepeat,actor:null,gaveCheck:false},{key:checkedRepeat,actor:'white',gaveCheck:true},{key:checkedRepeat,actor:'black',gaveCheck:false}];
+          check('連続王手の千日手は王手側敗北',recordPosition('white',true)?.includes('連続王手')&&state.winner==='black');
+          state=initialState();state.board=Array.from({length:9},()=>Array(9).fill(null));state.turn='white';state.ply=0;
+          const passKing=piece('king','white'),passAttacker=piece('pawn','black'),freeKing=piece('king','black');
+          passKing.attr=passAttacker.attr='fire';freeKing.attr='water';state.board[0][8]=freeKing;
+          state.clashes=[{x:4,y:4,attr:'fire',pieces:[passKing,passAttacker],support:[],expiresAt:5}];
+          check('衝突中の王だけなら自動パス',resolveNoLegalMoves()===true&&state.ply===1&&state.turn==='black'&&state.winner===null);
+          state=initialState();state.board=Array.from({length:9},()=>Array(9).fill(null));state.clashes=[];
+          const differentKingW=piece('king','white'),differentKingB=piece('king','black');
+          differentKingW.attr='fire';differentKingB.attr='water';state.board[4][4]=differentKingW;state.board[3][4]=differentKingB;
+          check('異属性の王同士の直接攻撃を禁止',!boardMoves(differentKingW,4,4).some(m=>m.x===4&&m.y===3));
+          state=initialState();state.board=Array.from({length:9},()=>Array(9).fill(null));state.clashes=[];
+          const promoKingW=piece('king','white'),promoKingB=piece('king','black'),promoPawn=piece('pawn','white');
+          promoKingW.attr=promoKingB.attr='fire';promoPawn.attr='water';
+          state.board[8][0]=promoKingW;state.board[0][8]=promoKingB;state.board[3][4]=promoPawn;
+          check('敵陣へ入る駒は成れる',mayPromote(promoPawn,3,2));
+          check('歩と香の最終段は強制成り対象',deadEnd(promoPawn,0)&&deadEnd(piece('lance','white'),0));
+          check('桂の最終2段は強制成り対象',deadEnd(piece('knight','white'),0)&&deadEnd(piece('knight','white'),1));
+          promoPawn.promoted=true;
+          check('成り歩は金と同じ6方向',rawMoves(promoPawn,4,3,state.board).length===6);
+          const dragon=piece('rook','white');dragon.attr='fire';dragon.promoted=true;state.board[4][4]=dragon;
+          check('龍は飛車と斜め1マス',rawMoves(dragon,4,4,state.board).some(m=>m.x===3&&m.y===3));
+          state=initialState();const nifuPawn=piece('pawn','white');nifuPawn.attr=state.board[6][0].attr;state.hand.white=[nifuPawn];
+          check('二歩になる筋へ歩を打てない',!dropMoves(nifuPawn,0).some(m=>m.x===0));
+          state=initialState();state.autoPlay=true;state.board=Array.from({length:9},()=>Array(9).fill(null));state.clashes=[];
+          const weakKing=piece('king','black'),weakAttacker=piece('pawn','white'),safeKing=piece('king','white');
+          weakKing.attr='fire';weakAttacker.attr='wind';safeKing.attr='fire';state.board[4][4]=weakKing;state.board[5][4]=weakAttacker;state.board[8][0]=safeKing;
+          execute({kind:'board',fromX:4,fromY:5,x:4,y:4,result:'retaliation'},true);
+          check('王は弱属性攻撃1回目を返り討ち',weakKing.weakHits===1&&state.hand.black.some(p=>p.type==='pawn')&&state.winner===null);
+          state=initialState();state.autoPlay=true;state.board=Array.from({length:9},()=>Array(9).fill(null));state.clashes=[];
+          const damagedKing=piece('king','black'),secondAttacker=piece('pawn','white'),otherKing=piece('king','white');
+          damagedKing.attr='fire';damagedKing.weakHits=1;secondAttacker.attr='wind';otherKing.attr='fire';state.board[4][4]=damagedKing;state.board[5][4]=secondAttacker;state.board[8][0]=otherKing;
+          execute({kind:'board',fromX:4,fromY:5,x:4,y:4,result:'capture'},true);
+          check('王は弱属性攻撃2回目で敗北',state.winner==='white');
           const counts={king:8,rook:16,bishop:16,gold:6,silver:5,knight:2,lance:4,pawn:1};
           let movement=true;
           for(const [type,expected] of Object.entries(counts)){

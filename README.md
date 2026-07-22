@@ -22,6 +22,12 @@ python -m http.server 8000
 
 サーバー起動後、`http://localhost:8000/tests/regression.html` を開きます。
 
+CPU自己対戦は `http://localhost:8000/tests/self-play.html` を開くと100局を自動実行します。
+
+## ルール
+
+現在の実装に対応する全文は [RULES.md](RULES.md) を参照してください。
+
 ## 開発状況
 
 正式リリースまでの不足項目と優先順位は [RELEASE_READINESS.md](RELEASE_READINESS.md) を参照してください。

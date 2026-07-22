@@ -156,18 +156,72 @@ button.secondary {
 }
 
 .stock .stock-piece {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.8);
-  font-weight: 700;
-  font-size: 0.9rem;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 54px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
 }
 
-.stock .stock-piece:disabled { cursor: default; opacity: 0.8; }
-.stock .stock-piece.selected-hand { border: 2px solid #f59e0b; }
+.stock .stock-piece:disabled { cursor: default; opacity: 1; }
+.stock .stock-piece.selected-hand {
+  outline: 3px solid #f59e0b;
+  outline-offset: 2px;
+}
+
+.hand-piece-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 50px;
+  overflow: hidden;
+  clip-path: polygon(50% 0%, 82% 14%, 100% 100%, 0% 100%, 18% 14%);
+  background: #f1cf8b;
+  color: #000;
+  filter: drop-shadow(0 2px 1px rgba(17, 24, 39, 0.45));
+}
+
+.hand-piece-icon.black { transform: rotate(180deg); }
+
+.hand-piece-attr {
+  position: absolute;
+  inset: 2px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  font-size: 2.15rem;
+  line-height: 1;
+  opacity: .78;
+  filter: contrast(1.25) saturate(1.15);
+  z-index: 1;
+}
+
+.hand-piece-attr img {
+  width: 82%;
+  height: 90%;
+  object-fit: contain;
+}
+
+.hand-piece-symbol {
+  position: relative;
+  z-index: 2;
+  font-size: 1.45rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #000;
+  text-shadow:
+    -1px -1px 0 #fff,
+    1px -1px 0 #fff,
+    -1px 1px 0 #fff,
+    1px 1px 0 #fff,
+    0 2px 2px rgba(0, 0, 0, .75);
+}
+
+.hand-piece-symbol.flipped { transform: rotate(180deg); }
 
 .square {
   position: relative;
@@ -189,6 +243,10 @@ button.secondary {
 .square.capture-target { background: #4ade80; }
 .square.retaliation-target { background: #f87171; }
 .square.same-target { background: #fbbf24; }
+.square.support-target {
+  background: #67e8f9;
+  box-shadow: inset 0 0 0 4px #0e7490;
+}
 .square:hover { filter: brightness(1.04); }
 .square.clash-square {
   background: repeating-linear-gradient(135deg, #3f3f46 0 8px, #18181b 8px 16px);
@@ -416,10 +474,12 @@ button.secondary {
 }
 
 .captured-list li {
-  background: rgba(255,255,255,0.08);
-  border-radius: 999px;
-  padding: 4px 8px;
-  font-size: 0.9rem;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  min-height: 50px;
+  padding: 0;
+  background: transparent;
 }
 
 @media (max-width: 900px) {

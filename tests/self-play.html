@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>属性将棋 CPU自己対戦</title>
+  <style>
+    body{font-family:system-ui,sans-serif;max-width:900px;margin:32px auto;padding:0 16px;background:#111827;color:#f9fafb}
+    button{padding:10px 18px;font-weight:700;cursor:pointer}
+    pre{padding:16px;background:#1f2937;border-radius:8px;white-space:pre-wrap}
+    iframe{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+  </style>
+</head>
+<body>
+  <h1>CPU自己対戦テスト</h1>
+  <p>CPU同士の対局を自動実行し、例外、規定手数超過、勝敗数を記録します。</p>
+  <button id="run" type="button" disabled>100局実行</button>
+  <pre id="result">ゲームを読み込んでいます…</pre>
+  <iframe id="game" src="../index.html" title="自己対戦対象"></iframe>
+  <script>
+    const frame=document.getElementById('game'),button=document.getElementById('run'),result=document.getElementById('result');
+    frame.addEventListener('load',()=>{button.disabled=false;runTests();});
+    button.addEventListener('click',runTests);
+    function runTests(){
+      button.disabled=true;result.textContent='実行中…';
+      setTimeout(()=>{
+        const params=new URLSearchParams(location.search),games=Math.max(1,Number(params.get('games'))||100),maxPlies=Math.max(20,Number(params.get('maxPlies'))||600);
+        const report=frame.contentWindow.eval(`runSelfPlayGames(${games},${maxPlies})`);
+        const saved={executedAt:new Date().toISOString(),...report};
+        localStorage.setItem('attributeShogiSelfPlayResult',JSON.stringify(saved));
+        result.textContent=JSON.stringify(saved,null,2);
+        button.disabled=false;
+      },50);
+    }
+  </script>
+</body>
+</html>

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
     <title>属性付き将棋</title>
-    <link rel="stylesheet" href="styles.css?v=22" />
+    <link rel="stylesheet" href="styles.css?v=24" />
   </head>
   <body>
     <main class="app-shell">
@@ -13,10 +13,10 @@
         <h1>属性付き将棋</h1>
         <p class="subtitle">仕様書に沿った MVP 版です。属性相性で戦闘結果が変わります。</p>
         <div class="status-row">
-          <div id="turn" class="pill">手番: 先手</div>
+          <div id="turn" class="pill" aria-live="polite">手番: 先手</div>
           <button id="reset" class="secondary">初期化</button>
         </div>
-        <div id="message" class="message">先手の番です。駒を選んでください。</div>
+        <div id="message" class="message" role="status" aria-live="polite" aria-atomic="true">先手の番です。駒を選んでください。</div>
         <section class="log-panel" aria-label="直近の対局ログ">
           <h2>直近5手</h2>
           <ol id="move-log" class="move-log"></ol>
@@ -44,8 +44,9 @@
         <h3>王の特殊ルール</h3>
         <ul class="king-rules">
           <li>弱属性攻撃の1回目は返り討ち、2回目は王側の敗北です。</li>
-          <li>同属性衝突を4ターン耐えると王側が勝利し、攻撃駒は消滅します。</li>
+          <li>王と通常駒の同属性衝突は、王が4ターン耐えると王側の勝利です。</li>
           <li>王側の強属性援軍は攻撃駒を捕獲し、相手側の強属性援軍は王を倒します。</li>
+          <li>同属性の王同士は、4ターン以内なら先に強属性援軍を送った側、膠着した場合は攻撃側が勝利します。</li>
         </ul>
 
         <h3>持ち駒</h3>
@@ -64,12 +65,14 @@
         <ol>
           <li>自分の駒を選択します。</li>
           <li>移動候補または攻撃候補をクリックします。</li>
-          <li>緑は有利、赤は不利、黄は同属性です。持ち駒は盤の下から選べます。</li>
-          <li>同属性は衝突マスを6ターン封鎖します。前後に強属性の援軍を置くと制圧できます。</li>
+          <li>緑は有利、赤は不利、黄は同属性、水色は援軍勝利です。持ち駒は盤の下から選べます。</li>
+          <li>同属性は衝突マスを6ターン封鎖します。盤上の強属性駒を前後へ移動すると制圧できます。</li>
+          <li>持ち駒を援軍位置へ直接打つことはできません。</li>
         </ol>
       </aside>
     </main>
 
-    <script src="app.js?v=19"></script>
+    <script src="game-core.js?v=2"></script>
+    <script src="app.js?v=23"></script>
   </body>
 </html>
