@@ -1062,13 +1062,13 @@ button.secondary { background: #263449; border: 1px solid rgba(255,255,255,.09);
 .square-attribute-bg.attr-water img {
   width: 180%;
   height: 180%;
-  transform: translateY(16.667%);
+  transform: translateY(-20%);
 }
 
 .square-attribute-bg.attr-wind img {
   width: 145%;
   height: 145%;
-  transform: translateY(-50%);
+  transform: translateY(-5%);
 }
 
 .square-attribute-bg.attr-water {
@@ -1085,7 +1085,7 @@ button.secondary { background: #263449; border: 1px solid rgba(255,255,255,.09);
 
 .piece .piece-symbol,
 .hand-piece-symbol {
-  opacity: .75;
+  opacity: .9;
 }
 
 .hand-piece-attr {
