@@ -6,48 +6,24 @@
     <meta name="theme-color" content="#111827" />
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
     <title>属性付き将棋</title>
-    <link rel="stylesheet" href="styles.css?v=55" />
+    <link rel="stylesheet" href="styles.css?v=56" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="app-icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon-192.png" />
   </head>
   <body>
     <main class="app-shell">
-      <aside class="panel side-panel" aria-label="ルール概要">
-        <h2>ルール概要</h2>
-        <ul class="legend">
-          <li><span class="chip fire"><img src="fire-realistic-v1.png" alt="">火</span>風に勝つ</li>
-          <li><span class="chip water"><img src="water-realistic-v1.png" alt="">水</span>火に勝つ</li>
-          <li><span class="chip wind"><img src="wind-realistic-v1.png" alt="">風</span>水に勝つ</li>
-        </ul>
-        <p class="result-legend"><span>有利</span><span>不利</span><span>同</span><span>援</span> 王の耐久は4。弱属性攻撃は1、同属性膠着の自然解消は2ダメージです。援軍は強属性のみ有効です。</p>
-      </aside>
-
       <section class="panel game-panel">
-        <h1>属性付き将棋</h1>
-        <p class="subtitle">属性相性によって駒の価値と戦局が変わる、新しい将棋ゲームです。</p>
+        <header class="game-header">
+          <h1>属性付き将棋</h1>
+          <button id="open-menu" type="button" class="menu-button secondary" aria-label="ルールと設定を開く" aria-haspopup="dialog">⚙</button>
+        </header>
         <div class="status-row">
           <div id="turn" class="pill" aria-live="polite">手番: 先手</div>
-          <button id="reset" class="secondary">初期化</button>
-        </div>
-        <div class="game-settings" aria-label="ゲーム設定">
-          <label>CPU
-            <select id="cpu-difficulty">
-              <option value="easy">やさしい</option>
-              <option value="normal" selected>ふつう</option>
-              <option value="hard">むずかしい</option>
-            </select>
-          </label>
-          <button id="sound-toggle" type="button" class="secondary" aria-pressed="false">🔊 効果音</button>
-          <label>音量 <input id="sound-volume" type="range" min="0" max="1" step="0.1" value="0.7"></label>
-          <button id="open-rules" type="button" class="secondary">遊び方・ルール</button>
-        </div>
-        <div class="game-actions" aria-label="対局操作">
-          <button id="undo-turn" type="button" class="secondary" title="直前の自分の着手前まで戻します">待った</button>
-          <button id="save-game" type="button" class="secondary">対局を保存</button>
-          <button id="export-record" type="button" class="secondary">棋譜を出力</button>
-          <button id="copy-diagnostics" type="button" class="secondary">診断情報をコピー</button>
-          <button id="resign" type="button" class="danger">投了</button>
+          <div class="primary-actions">
+            <button id="reset" class="secondary">初期化</button>
+            <button id="resign" type="button" class="danger">投了</button>
+          </div>
         </div>
         <div id="message" class="message" role="status" aria-live="polite" aria-atomic="true">先手の番です。駒を選んでください。</div>
         <div id="end-actions" class="end-actions" hidden>
@@ -80,6 +56,48 @@
         <div class="captured-mirror" aria-hidden="true"><ul id="black-hand" class="captured-list"></ul><ul id="white-hand" class="captured-list"></ul></div>
       </section>
     </main>
+
+    <dialog id="menu-dialog" class="rules-dialog menu-dialog" aria-labelledby="menu-title">
+      <div class="menu-dialog-body">
+        <div class="rules-dialog-header">
+          <h2 id="menu-title">ルール・設定</h2>
+          <button id="close-menu" type="button" class="secondary" aria-label="メニューを閉じる">閉じる</button>
+        </div>
+        <section class="menu-section" aria-labelledby="rule-summary-title">
+          <h3 id="rule-summary-title">ルール概要</h3>
+          <ul class="legend">
+            <li><span class="chip fire"><img src="fire-realistic-v1.png" alt="">火</span>風に勝つ</li>
+            <li><span class="chip water"><img src="water-realistic-v1.png" alt="">水</span>火に勝つ</li>
+            <li><span class="chip wind"><img src="wind-realistic-v1.png" alt="">風</span>水に勝つ</li>
+          </ul>
+          <p class="result-legend"><span>有利</span><span>不利</span><span>同</span><span>援</span> 王の耐久は4。弱属性攻撃は1、同属性膠着の自然解消は2ダメージです。援軍は強属性のみ有効です。</p>
+          <button id="open-rules" type="button" class="secondary">詳しい遊び方・ルール</button>
+        </section>
+        <section class="menu-section" aria-labelledby="settings-title">
+          <h3 id="settings-title">設定</h3>
+          <div class="game-settings" aria-label="ゲーム設定">
+            <label>CPU
+              <select id="cpu-difficulty">
+                <option value="easy">やさしい</option>
+                <option value="normal" selected>ふつう</option>
+                <option value="hard">むずかしい</option>
+              </select>
+            </label>
+            <button id="sound-toggle" type="button" class="secondary" aria-pressed="false">🔊 効果音</button>
+            <label>音量 <input id="sound-volume" type="range" min="0" max="1" step="0.1" value="0.7"></label>
+          </div>
+        </section>
+        <section class="menu-section" aria-labelledby="tools-title">
+          <h3 id="tools-title">その他の操作</h3>
+          <div class="game-actions" aria-label="その他の対局操作">
+            <button id="undo-turn" type="button" class="secondary" title="直前の自分の着手前まで戻します">待った</button>
+            <button id="save-game" type="button" class="secondary">対局を保存</button>
+            <button id="export-record" type="button" class="secondary">棋譜を出力</button>
+            <button id="copy-diagnostics" type="button" class="secondary">診断情報をコピー</button>
+          </div>
+        </section>
+      </div>
+    </dialog>
 
     <dialog id="rules-dialog" class="rules-dialog" aria-labelledby="rules-title">
       <form method="dialog">
@@ -135,6 +153,6 @@
 
     <footer class="app-footer">属性将棋 Ver0.1.0-rc.1</footer>
     <script src="game-core.js?v=13"></script>
-    <script src="app.js?v=36"></script>
+    <script src="app.js?v=37"></script>
   </body>
 </html>

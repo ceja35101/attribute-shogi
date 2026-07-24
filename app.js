@@ -352,8 +352,13 @@ function bind(){
     soundVolume=Number(volume.value);
     localStorage.setItem("attributeShogiVolume",String(soundVolume));
   });
-  const dialog=document.getElementById("rules-dialog"),skip=document.getElementById("skip-tutorial");
-  document.getElementById("open-rules").addEventListener("click",()=>dialog.showModal());
+  const menuDialog=document.getElementById("menu-dialog"),dialog=document.getElementById("rules-dialog"),skip=document.getElementById("skip-tutorial");
+  document.getElementById("open-menu").addEventListener("click",()=>menuDialog.showModal());
+  document.getElementById("close-menu").addEventListener("click",()=>menuDialog.close());
+  document.getElementById("open-rules").addEventListener("click",()=>{
+    menuDialog.close();
+    dialog.showModal();
+  });
   dialog.addEventListener("close",()=>{
     if(skip.checked)localStorage.setItem("attributeShogiTutorialSeen","yes");
   });
