@@ -1109,7 +1109,7 @@ button.secondary { background: #263449; border: 1px solid rgba(255,255,255,.09);
 .square-attribute-bg.attr-water img {
   width: 180%;
   height: 180%;
-  transform: translateY(-15%);
+  transform: translateY(-30%);
 }
 
 .square-attribute-bg.attr-wind img {
