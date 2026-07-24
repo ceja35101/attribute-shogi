@@ -1214,7 +1214,7 @@ button.secondary { background: #263449; border: 1px solid rgba(255,255,255,.09);
   .square-attribute-bg { inset: 0; }
     .square-attribute-bg.attr-fire img,
   .square-attribute-bg.attr-water img {
-    transform: translateY(10%);
+    transform: translateY(30%);
   }
   .play-sidebar { grid-template-columns: 1fr; }
   .play-sidebar .log-panel { grid-column: 1; }
