@@ -233,6 +233,34 @@ function returnToCurrent(){
   render();
 }
 
+function undoTarget(){
+  if(!state||state.autoPlay||state.aiThinking||replayIndex!==null)return null;
+  const lastHuman=[...(state.fullLog||[])].reverse().find(item=>item.color===HUMAN);
+  if(!lastHuman)return null;
+  const targetPly=Math.max(0,lastHuman.number-1);
+  let snapshotIndex=-1;
+  for(let i=state.snapshots.length-1;i>=0;i--)if(state.snapshots[i].position?.ply===targetPly){snapshotIndex=i;break}
+  return snapshotIndex<0?null:{targetPly,snapshotIndex};
+}
+
+function undoLastTurn(){
+  const target=undoTarget();
+  if(!target)return false;
+  const previous=state,position=JSON.parse(JSON.stringify(previous.snapshots[target.snapshotIndex].position));
+  const snapshots=previous.snapshots.slice(0,target.snapshotIndex+1);
+  const fullLog=(previous.fullLog||[]).filter(item=>item.number<=target.targetPly).map(item=>({...item}));
+  const log=fullLog.slice(-5).reverse().map(item=>{
+    let snapshotIndex=null;
+    for(let i=snapshots.length-1;i>=0;i--)if(snapshots[i].position?.ply===item.number){snapshotIndex=i;break}
+    return{...item,snapshotIndex};
+  });
+  state={...previous,...position,snapshots,fullLog,log,history:(previous.history||[]).slice(0,target.targetPly+1),selected:null,moves:[],aiThinking:false,autoPlay:false,winner:position.winner||null,message:"待ったを使用し、直前の自分の着手前へ戻りました。ここから棋譜が分岐します。",tone:"warning"};
+  replayIndex=null;
+  lastSoundSnapshot=target.snapshotIndex;
+  render();
+  return true;
+}
+
 function renderLog(){
   const el=document.getElementById("move-log");
   el.innerHTML="";
@@ -259,6 +287,7 @@ function renderReplayControls(){
   document.getElementById("replay-prev").disabled=current<=0;
   document.getElementById("replay-next").disabled=replayIndex===null||current>=count-1;
   document.getElementById("replay-current").disabled=replayIndex===null;
+  document.getElementById("undo-turn").disabled=!undoTarget();
   document.getElementById("replay-status").textContent=replayIndex===null?"現在局面":`棋譜再生: ${current}手目 / ${count-1}手`;
 }
 
@@ -297,6 +326,7 @@ function bind(){
   document.getElementById("replay-prev").addEventListener("click",()=>showReplay((replayIndex===null?state.snapshots.length-1:replayIndex)-1));
   document.getElementById("replay-next").addEventListener("click",()=>showReplay(replayIndex+1));
   document.getElementById("replay-current").addEventListener("click",returnToCurrent);
+  document.getElementById("undo-turn").addEventListener("click",undoLastTurn);
   document.getElementById("board").addEventListener("keydown",e=>{
     const square=e.target.closest(".square");
     if(!square||!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key))return;

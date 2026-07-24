@@ -43,6 +43,7 @@
           <button id="open-rules" type="button" class="secondary">遊び方・ルール</button>
         </div>
         <div class="game-actions" aria-label="対局操作">
+          <button id="undo-turn" type="button" class="secondary" title="直前の自分の着手前まで戻します">待った</button>
           <button id="save-game" type="button" class="secondary">対局を保存</button>
           <button id="export-record" type="button" class="secondary">棋譜を出力</button>
           <button id="copy-diagnostics" type="button" class="secondary">診断情報をコピー</button>
@@ -97,7 +98,8 @@
           </section>
           <section>
             <h3>3. 衝突と援軍</h3>
-            <p>同属性は衝突してマスを封鎖します。衝突前から盤上にいた強属性駒を「援」と表示された援軍位置へ移動すると制圧できます。</p>
+            <p>同属性は衝突してマスを封鎖します。「衝1」と同じ番号の「援1」へ、衝突前から盤上にいた強属性駒を移動すると制圧できます。</p>
+            <p>両陣営の既存援軍は相殺され、その駒には「援1×」が付きます。その駒は同じ衝突へ再参加できませんが、別の未使用の強属性駒へ入れ替えれば援軍が成立します。</p>
           </section>
           <section>
             <h3>4. 王と勝敗</h3>
@@ -105,7 +107,7 @@
           </section>
           <section>
             <h3>5. 直前手と棋譜</h3>
-            <p>青紫の枠が直前手です。ログや前後ボタンから過去局面を確認できます。</p>
+            <p>青紫の枠が直前手です。ログや前後ボタンから過去局面を確認できます。「待った」は直前の自分の着手前まで戻し、それ以降の棋譜を破棄します。</p>
           </section>
         </div>
         <label class="tutorial-check"><input id="skip-tutorial" type="checkbox"> 次回から起動時に表示しない</label>
@@ -133,6 +135,6 @@
 
     <footer class="app-footer">属性将棋 Ver0.1.0-rc.1</footer>
     <script src="game-core.js?v=13"></script>
-    <script src="app.js?v=34"></script>
+    <script src="app.js?v=35"></script>
   </body>
 </html>

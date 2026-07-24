@@ -20,7 +20,7 @@ jobs:
       - name: Run browser regression tests
         run: |
           google-chrome --headless=new --no-sandbox --disable-gpu --virtual-time-budget=10000 --dump-dom http://127.0.0.1:8000/tests/regression.html > regression.html
-          grep -q "63/63 件成功" regression.html
+          grep -q "65/65 件成功" regression.html
       - name: Run durability test
         run: |
           google-chrome --headless=new --no-sandbox --disable-gpu --virtual-time-budget=120000 --dump-dom http://127.0.0.1:8000/tests/durability.html > durability.html
