@@ -172,7 +172,7 @@ function renderBoard(){
       const lockText=lockedClashes.length?` / 衝突${lockedClashes.map(c=>shown.clashes.indexOf(c)+1).join("・")}への援軍権使用済み`:"";
       b.title=`${symbol(p)} / ${ATTRIBUTE_DATA[p.attr].label}属性${p.type==="king"?` / 耐久 ${4-(p.weakHits||0)}/4`:""}${lockText}`;
       const lockBadge=lockedClashes.length?`<span class="support-used-badge">援${lockedClashes.map(c=>shown.clashes.indexOf(c)+1).join("・")}×</span>`:"";
-      b.innerHTML=`<span class="piece ${p.color}"><span class="piece-symbol ${p.color===CPU?"flipped":""}">${symbol(p)}</span><span class="attr attr-${p.attr}">${attributeIcon(p.attr)}</span>${p.type==="king"&&p.weakHits?`<span class="king-damage">${4-p.weakHits}/4</span>`:""}${lockBadge}</span>`;
+      b.innerHTML=`<span class="square-attribute-bg attr-${p.attr}" aria-hidden="true">${attributeIcon(p.attr)}</span><span class="piece piece-attr-${p.attr} ${p.color}"><span class="piece-symbol ${p.color===CPU?"flipped":""}">${symbol(p)}</span>${p.type==="king"&&p.weakHits?`<span class="king-damage">${4-p.weakHits}/4</span>`:""}${lockBadge}</span>`;
     }
     if(last?.to.x===x&&last.to.y===y&&last.badge){
       const badge=document.createElement("span");

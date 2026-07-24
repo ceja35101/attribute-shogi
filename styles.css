@@ -710,7 +710,7 @@ button.danger:hover { background: #991b1b; }
   transform: translateY(9%);
 }
 
-.piece:has(.attr-wind) .piece-symbol {
+.piece.piece-attr-wind .piece-symbol {
   color: #000000;
   text-shadow:
     -1px -1px 0 #ffffff,
@@ -949,6 +949,7 @@ body {
 .piece {
   width: 76%;
   height: 86%;
+  z-index: 2;
   background: linear-gradient(145deg, #f7dfaa 0%, #e4b96f 62%, #c99148 100%) !important;
   filter: drop-shadow(0 2px 1px rgba(54, 31, 9, .58));
 }
@@ -963,12 +964,13 @@ body {
   text-shadow: 0 1px 0 rgba(255,255,255,.8), 0 2px 2px rgba(70,38,8,.35);
 }
 
-.piece:has(.attr-wind) .piece-symbol {
+.piece.piece-attr-wind .piece-symbol {
   color: #21170d;
   text-shadow: 0 1px 0 rgba(255,255,255,.8), 0 2px 2px rgba(70,38,8,.35);
 }
 
 .board {
+  width: 100%;
   border: 2px solid #5a3719;
   background: #d6a45f;
   box-shadow: inset 0 0 18px rgba(103, 61, 20, .2);
@@ -1021,51 +1023,51 @@ button.secondary { background: #263449; border: 1px solid rgba(255,255,255,.09);
   text-shadow: 0 1px 0 rgba(255,255,255,.85), 0 2px 2px rgba(70,38,8,.35);
 }
 
-/* 属性色の木札と、文字に重ならない小型の属性紋章 */
-.piece:has(.attr-fire),
+/* 属性色の木札と、文字の背後でマス全体へ表示する属性紋章 */
+.piece.piece-attr-fire,
 .hand-piece-icon:has(.attr-fire) {
   background: linear-gradient(145deg, #f3d09d 0%, #dfa06f 62%, #bd704d 100%) !important;
 }
 
-.piece:has(.attr-water),
+.piece.piece-attr-water,
 .hand-piece-icon:has(.attr-water) {
   background: linear-gradient(145deg, #d7d8c1 0%, #9fbcc1 62%, #688d99 100%) !important;
 }
 
-.piece:has(.attr-wind),
+.piece.piece-attr-wind,
 .hand-piece-icon:has(.attr-wind) {
   background: linear-gradient(145deg, #e7d5aa 0%, #c5b783 62%, #907e58 100%) !important;
 }
 
-.piece .attr {
-  left: 50%;
-  top: 14%;
-  width: 28%;
-  height: 21%;
-  overflow: hidden;
-  border: 1px solid rgba(69, 47, 23, .38);
-  border-radius: 999px;
-  background: rgba(255, 249, 232, .84) !important;
-  opacity: 1;
-  filter: none;
-  box-shadow: 0 1px 2px rgba(60, 35, 12, .28), inset 0 1px rgba(255,255,255,.75);
+.square-attribute-bg {
+  position: absolute;
+  inset: 3%;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  opacity: .54;
+  filter: contrast(1.55) saturate(1.5) drop-shadow(0 1px 1px rgba(255,255,255,.38));
 }
 
-.piece .attr-fire,
-.piece .attr-water,
-.piece .attr-wind { transform: translate(-50%, -50%); opacity: 1; }
-
-.piece.black .attr-fire,
-.piece.black .attr-water,
-.piece.black .attr-wind {
-  left: 50%;
-  top: 14%;
-  transform: translate(-50%, -50%) rotate(180deg);
-  opacity: 1;
+.square-attribute-bg img {
+  width: 94%;
+  height: 94%;
+  object-fit: contain;
 }
 
-.piece .attr img { width: 84%; height: 84%; }
-.piece .attr-fire img { transform: scale(1.12); }
+.square-attribute-bg.attr-fire img { transform: scale(1.08); }
+.square-attribute-bg.attr-water {
+  opacity: .62;
+  filter: contrast(1.65) saturate(1.65) drop-shadow(0 1px 1px rgba(255,255,255,.42));
+}
+.square-attribute-bg.attr-wind {
+  opacity: .66;
+  filter: contrast(1.8) saturate(1.15) drop-shadow(0 1px 1px rgba(255,255,255,.48));
+}
+.piece .piece-symbol,
+.king-damage,
+.support-used-badge { z-index: 4; }
 
 .hand-piece-attr {
   inset: 4% auto auto 50%;
@@ -1127,9 +1129,23 @@ button.secondary { background: #263449; border: 1px solid rgba(255,255,255,.09);
 }
 
 @media (max-width: 560px) {
-  body { padding: 8px; place-items: start center; }
-  .app-shell { min-width: 0; gap: 12px; }
-  .panel { min-width: 0; padding: 14px; border-radius: 14px; }
+  body { padding: 4px; place-items: start center; }
+  .app-shell { min-width: 0; gap: 8px; }
+  .panel { min-width: 0; padding: 8px; border-radius: 10px; }
+  .board-frame { width: 100%; padding: 5px; }
+  .board-coordinate-grid {
+    grid-template-columns: 16px minmax(0, 1fr);
+    grid-template-rows: 16px minmax(0, 1fr);
+    column-gap: 4px;
+    row-gap: 4px;
+  }
+  .board-axis { font-size: .78rem; line-height: 1; }
+  .board-axis-x { width: 100%; align-self: stretch; }
+  .board-axis-y { height: 100%; min-height: 0; align-self: stretch; }
+  .board-axis span { min-width: 0; min-height: 0; line-height: 1; }
+  .piece { width: 82%; height: 90%; }
+  .piece .piece-symbol { font-size: clamp(.92rem, 4.5vw, 1.12rem); }
+  .square-attribute-bg { inset: 1%; }
   .play-sidebar { grid-template-columns: 1fr; }
   .play-sidebar .log-panel { grid-column: 1; }
   .tutorial-grid { grid-template-columns: 1fr; }
