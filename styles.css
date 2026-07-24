@@ -1058,6 +1058,17 @@ button.secondary { background: #263449; border: 1px solid rgba(255,255,255,.09);
   object-fit: contain;
 }
 
+.square-attribute-bg.attr-fire img,
+.square-attribute-bg.attr-water img {
+  width: 180%;
+  height: 180%;
+}
+
+.square-attribute-bg.attr-wind img {
+  width: 132%;
+  height: 132%;
+}
+
 .square-attribute-bg.attr-fire img { transform: none; }
 .square-attribute-bg.attr-water {
   opacity: .7;
