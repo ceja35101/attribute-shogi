@@ -183,11 +183,21 @@ function renderBoard(){
     if(m&&m.result!=="move"){
       const resultBadge=document.createElement("span"),labels={capture:"有利",retaliation:"不利",same:"同",support:"援"};
       resultBadge.className=`move-result-badge result-${m.result}`;
+      if(m.result==="support"&&supportSlot){
+        const supportAttr=Object.keys(ATTRIBUTE_DATA).find(attr=>ATTRIBUTE_DATA[attr].beats===supportSlot.attr);
+        if(supportAttr)resultBadge.classList.add(`support-attr-${supportAttr}`);
+      }
       resultBadge.textContent=labels[m.result]||"";
       b.appendChild(resultBadge);
       b.setAttribute("aria-label",`${coord(x,y)} ${labels[m.result]||"移動"}`);
     }else b.setAttribute("aria-label",`${coord(x,y)}${p?` ${symbol(p)} ${ATTRIBUTE_DATA[p.attr].label}属性`:" 空きマス"}${supportSlot?` 衝突${clashNumber}の強属性援軍位置${selectedLocked?"・選択中の駒は援軍権使用済み":""}`:""}`);
-    if(supportSlot&&!clash){const marker=document.createElement("span");marker.className="support-slot-badge";marker.textContent=`援${clashNumber}${selectedLocked?"×":""}`;marker.setAttribute("aria-hidden","true");b.appendChild(marker)}
+    if(supportSlot&&!clash){
+      const marker=document.createElement("span"),supportAttr=Object.keys(ATTRIBUTE_DATA).find(attr=>ATTRIBUTE_DATA[attr].beats===supportSlot.attr);
+      marker.className=`support-slot-badge${supportAttr?` support-attr-${supportAttr}`:""}`;
+      marker.textContent=`援${clashNumber}${selectedLocked?"×":""}`;
+      marker.setAttribute("aria-hidden","true");
+      b.appendChild(marker);
+    }
     el.appendChild(b);
   }));
   appendMoveArrow(el,last,recent);

@@ -564,6 +564,11 @@ button.danger:hover { background: #991b1b; }
 
 .square.support-unavailable .support-slot-badge { background: #4b5563; border-color: #e5e7eb; }
 
+.support-attr-fire { color: #ff781f; }
+.support-attr-water { color: #38bdf8; }
+.support-attr-wind { color: #d1d5db; }
+.square.support-unavailable .support-slot-badge { color: #fff; }
+
 .support-used-badge {
   position: absolute;
   left: 2px;
@@ -1212,6 +1217,8 @@ button.secondary { background: #263449; border: 1px solid rgba(255,255,255,.09);
   .piece { width: 82%; height: 90%; }
   .piece .piece-symbol { font-size: clamp(.92rem, 4.5vw, 1.12rem); }
   .square-attribute-bg { inset: 0; }
+  .square-attribute-bg.attr-fire img,
+  .square-attribute-bg.attr-water img { transform: translateY(-45%); }
   .play-sidebar { grid-template-columns: 1fr; }
   .play-sidebar .log-panel { grid-column: 1; }
   .tutorial-grid { grid-template-columns: 1fr; }
