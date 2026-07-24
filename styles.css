@@ -186,7 +186,7 @@ button.danger:hover { background: #991b1b; }
 .rules-dialog {
   width: 720px;
   max-width: calc(100vw - 32px);
-  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
   border: 1px solid rgba(255,255,255,.2);
   border-radius: 16px;
   padding: 0;
@@ -1225,13 +1225,45 @@ button.secondary { background: #263449; border: 1px solid rgba(255,255,255,.09);
   .play-sidebar { grid-template-columns: 1fr; }
   .play-sidebar .log-panel { grid-column: 1; }
   .tutorial-grid { grid-template-columns: 1fr; }
-  .rules-dialog { max-width: calc(100vw - 16px); }
-  .rules-dialog form { padding: 12px; }
-  .menu-dialog-body { padding: 12px; }
-  .rules-dialog-header { gap: 8px; }
-  .rules-dialog-header h2 { font-size: 1.25rem; }
+  .rules-dialog {
+    width: calc(100vw - 8px);
+    max-width: calc(100vw - 8px);
+    max-height: calc(100dvh - 8px);
+    margin: auto;
+  }
+  .rules-dialog form,
+  .menu-dialog-body {
+    max-height: calc(100dvh - 8px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding:
+      max(12px, env(safe-area-inset-top))
+      12px
+      max(16px, env(safe-area-inset-bottom));
+    scroll-padding-block: 58px 64px;
+  }
+  .rules-dialog-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    gap: 8px;
+    padding: 4px 0 10px;
+    background: #111827;
+  }
+  .rules-dialog-header h2 {
+    min-width: 0;
+    font-size: 1.25rem;
+  }
+  .rules-dialog-header button { flex: 0 0 auto; }
   .tutorial-grid section { padding: 10px; }
   .tutorial-grid p { font-size: .82rem; }
+  .tutorial-start {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    box-shadow: 0 -8px 18px rgba(17,24,39,.88);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
