@@ -1,8 +1,8 @@
-const CACHE_NAME="attribute-shogi-v38";
+const CACHE_NAME="attribute-shogi-v39";
 const ASSETS=[
   "./",
   "./index.html",
-  "./styles.css?v=57",
+  "./styles.css?v=58",
   "./game-core.js?v=13",
   "./app.js?v=38",
   "./attributes.json",

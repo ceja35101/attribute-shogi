@@ -1114,7 +1114,7 @@ button.secondary { background: #263449; border: 1px solid rgba(255,255,255,.09);
 .square-attribute-bg.attr-water img {
   width: 180%;
   height: 180%;
-  transform: translateY(-20%);
+  transform: translateY(-15%);
 }
 
 .square-attribute-bg.attr-wind img {
@@ -1218,7 +1218,9 @@ button.secondary { background: #263449; border: 1px solid rgba(255,255,255,.09);
   .piece .piece-symbol { font-size: clamp(.92rem, 4.5vw, 1.12rem); }
   .square-attribute-bg { inset: 0; }
   .square-attribute-bg.attr-fire img,
-  .square-attribute-bg.attr-water img { transform: translateY(-45%); }
+  .square-attribute-bg.attr-water img {
+    transform: translateY(-10%);
+  }
   .play-sidebar { grid-template-columns: 1fr; }
   .play-sidebar .log-panel { grid-column: 1; }
   .tutorial-grid { grid-template-columns: 1fr; }
