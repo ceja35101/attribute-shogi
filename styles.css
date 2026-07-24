@@ -1214,10 +1214,10 @@ button.secondary { background: #263449; border: 1px solid rgba(255,255,255,.09);
   .square-attribute-bg { inset: 0; }
     .square-attribute-bg.attr-fire img,
   .square-attribute-bg.attr-water img {
-    transform: translateY(-20%);
+    transform: translateY(20%);
   }
   .play-sidebar { grid-template-columns: 1fr; }
-  .play-sidebar .log-panel { gr2id-column: 1; }
+  .play-sidebar .log-panel { grid-column: 1; }
   .tutorial-grid { grid-template-columns: 1fr; }
   .rules-dialog { max-width: calc(100vw - 16px); }
   .rules-dialog form { padding: 12px; }
