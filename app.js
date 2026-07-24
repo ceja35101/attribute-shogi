@@ -283,9 +283,10 @@ function renderLog(){
   el.innerHTML="";
   state.log.forEach(item=>{
     const li=document.createElement("li"),button=document.createElement("button");
+    const actor=item.color===HUMAN?"先手":item.color===CPU?"後手":item.number%2?"先手":"後手";
     button.type="button";
     button.className="log-move-button";
-    button.textContent=item.text;
+    button.textContent=`${actor}　${item.text}`;
     button.disabled=item.snapshotIndex==null;
     button.onclick=()=>showReplay(item.snapshotIndex);
     li.appendChild(button);
@@ -323,8 +324,8 @@ function render(){
   const shown=shownState();
   document.getElementById("turn").textContent=replayIndex!==null?`${shown.ply}手目`:state.winner?"対局終了":`手番: ${owner(state.turn)}`;
   const msg=document.getElementById("message");
-  msg.textContent=replayIndex!==null?"過去局面を表示中です。現在局面へ戻ると対局を再開できます。":state.message;
-  msg.className=`message ${replayIndex!==null?"info":state.tone}`;
+  msg.textContent=replayIndex!==null?(shown.message||"過去局面を表示中です。"):state.message;
+  msg.className=`message ${replayIndex!==null?(shown.tone||"info"):state.tone}`;
   document.getElementById("end-actions").hidden=!state.winner;
   saveGame();
 }

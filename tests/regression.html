@@ -150,8 +150,9 @@
           check('駒打ちに打マークを記録',state.lastMove.kind==='drop'&&state.lastMove.badge==='打'&&state.lastMove.from===null);
           state=initialState();trackLastMove('歩 : 1-7 → 1-6','white');renderBoard();
           check('盤面に直前手と大判属性背景を表示',document.querySelectorAll('.last-move-from').length===1&&document.querySelectorAll('.last-move-to').length===1&&document.querySelectorAll('.square-attribute-bg').length===40);
-          recordSnapshot();state.ply=1;addLog('歩 : 1-7 → 1-6');recordSnapshot();showReplay(0);
-          check('棋譜再生と現在局面への復帰',replayIndex===0&&shownState().ply===0&&(returnToCurrent(),replayIndex===null));
+          recordSnapshot();state.ply=1;state.message='CPUが銀を移動しました。';state.tone='info';addLog('銀 : 1-1 → 2-1','black');recordSnapshot();renderLog();showReplay(1);
+          const replayMessageRestored=document.getElementById('message').textContent==='CPUが銀を移動しました。',actorShown=document.querySelector('.log-move-button')?.textContent.includes('後手');
+          check('棋譜再生で当時のメッセージと着手側を表示',replayIndex===1&&shownState().ply===1&&replayMessageRestored&&actorShown&&(returnToCurrent(),replayIndex===null));
           state=initialState();recordSnapshot();const undoWhitePawn=state.board[6][0],undoBlackPawn=state.board[2][0];state.board[6][0]=null;state.board[5][0]=undoWhitePawn;state.ply=1;state.turn='black';addLog('歩 : 1-7 → 1-6','white');recordSnapshot();state.board[2][0]=null;state.board[3][0]=undoBlackPawn;state.ply=2;state.turn='white';addLog('歩 : 1-3 → 1-4','black');recordSnapshot();const undoWorked=undoLastTurn();
           check('待ったは直前の自分の着手前へ戻して未来棋譜を破棄',undoWorked&&state.ply===0&&state.turn==='white'&&state.board[6][0]?.type==='pawn'&&state.board[2][0]?.type==='pawn'&&state.fullLog.length===0&&state.snapshots.length===1);
           check('チュートリアルと設定UIを表示',document.getElementById('rules-dialog')&&document.getElementById('sound-toggle')&&document.getElementById('cpu-difficulty')&&document.getElementById('undo-turn'));
