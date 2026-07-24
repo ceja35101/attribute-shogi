@@ -1126,6 +1126,12 @@ button.secondary { background: #263449; border: 1px solid rgba(255,255,255,.09);
   opacity: .72;
   filter: contrast(1.38) saturate(.9) drop-shadow(0 1px 1px rgba(255,255,255,.46));
 }
+
+.square-attribute-bg.support-attribute-bg {
+  opacity: .25;
+  filter: contrast(1.28) saturate(1.18);
+}
+
 .piece .piece-symbol,
 .king-damage,
 .support-used-badge { z-index: 4; }

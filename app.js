@@ -193,6 +193,13 @@ function renderBoard(){
     }else b.setAttribute("aria-label",`${coord(x,y)}${p?` ${symbol(p)} ${ATTRIBUTE_DATA[p.attr].label}属性`:" 空きマス"}${supportSlot?` 衝突${clashNumber}の強属性援軍位置${selectedLocked?"・選択中の駒は援軍権使用済み":""}`:""}`);
     if(supportSlot&&!clash){
       const marker=document.createElement("span"),supportAttr=Object.keys(ATTRIBUTE_DATA).find(attr=>ATTRIBUTE_DATA[attr].beats===supportSlot.attr);
+      if(supportAttr){
+        const supportIcon=document.createElement("span");
+        supportIcon.className=`square-attribute-bg support-attribute-bg attr-${supportAttr}`;
+        supportIcon.setAttribute("aria-hidden","true");
+        supportIcon.innerHTML=attributeIcon(supportAttr);
+        b.appendChild(supportIcon);
+      }
       marker.className=`support-slot-badge${supportAttr?` support-attr-${supportAttr}`:""}`;
       marker.textContent=`援${clashNumber}${selectedLocked?"×":""}`;
       marker.setAttribute("aria-hidden","true");
