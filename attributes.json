@@ -1,5 +1,5 @@
 {
   "fire": { "label": "火", "icon": "fire.svg?v=2", "iconType": "image", "beats": "wind" },
   "water": { "label": "水", "icon": "water.svg?v=2", "iconType": "image", "beats": "fire" },
-  "wind": { "label": "風", "icon": "tornado.svg?v=2", "iconType": "image", "beats": "water" }
+  "wind": { "label": "風", "icon": "tornado.svg?v=3", "iconType": "image", "beats": "water" }
 }

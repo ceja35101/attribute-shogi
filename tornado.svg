@@ -2,8 +2,8 @@
   <!-- リング間を白く保つ、漏斗状の下地 -->
   <path d="M8 17 C20 3 78 2 93 17 C96 24 86 29 80 33 C88 39 83 46 73 50 C78 57 72 63 64 67 C68 74 62 80 56 84 C60 91 55 97 51 102 C48 108 51 113 55 117 C47 115 42 110 43 103 C44 98 47 94 43 90 C39 86 39 80 43 76 C37 72 34 66 39 61 C31 57 27 50 34 45 C22 41 18 34 27 29 C16 27 8 24 8 17 Z" fill="#fff"/>
 
-  <!-- 細い黒いリング -->
-  <g fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <!-- 細い薄灰色のリング -->
+  <g fill="none" stroke="#a3a3a3" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
     <path d="M9 17 C25 4 77 4 92 17 C78 27 25 29 10 20"/>
     <path d="M17 28 C34 20 76 20 84 30 C73 39 34 40 21 33"/>
     <path d="M25 40 C40 33 70 34 77 43 C67 51 40 52 29 46"/>
@@ -15,7 +15,7 @@
   </g>
 
   <!-- 回転の勢いを表す外周線 -->
-  <g fill="none" stroke="#000" stroke-width="2" stroke-linecap="round">
+  <g fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round">
     <path d="M3 12 C28 18 72 1 97 13"/>
     <path d="M15 38 C8 43 12 48 25 50"/>
     <path d="M76 36 C92 39 94 45 82 49"/>

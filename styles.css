@@ -1041,22 +1041,24 @@ button.secondary { background: #263449; border: 1px solid rgba(255,255,255,.09);
 
 .square-attribute-bg {
   position: absolute;
-  inset: 3%;
-  z-index: 3;
+  inset: 0;
+  z-index: 1;
   display: grid;
   place-items: center;
+  overflow: hidden;
   pointer-events: none;
   opacity: .54;
   filter: contrast(1.55) saturate(1.5) drop-shadow(0 1px 1px rgba(255,255,255,.38));
 }
 
 .square-attribute-bg img {
-  width: 94%;
-  height: 94%;
+  width: 120%;
+  height: 120%;
+  max-width: none;
   object-fit: contain;
 }
 
-.square-attribute-bg.attr-fire img { transform: scale(1.08); }
+.square-attribute-bg.attr-fire img { transform: none; }
 .square-attribute-bg.attr-water {
   opacity: .62;
   filter: contrast(1.65) saturate(1.65) drop-shadow(0 1px 1px rgba(255,255,255,.42));
@@ -1145,7 +1147,7 @@ button.secondary { background: #263449; border: 1px solid rgba(255,255,255,.09);
   .board-axis span { min-width: 0; min-height: 0; line-height: 1; }
   .piece { width: 82%; height: 90%; }
   .piece .piece-symbol { font-size: clamp(.92rem, 4.5vw, 1.12rem); }
-  .square-attribute-bg { inset: 1%; }
+  .square-attribute-bg { inset: 0; }
   .play-sidebar { grid-template-columns: 1fr; }
   .play-sidebar .log-panel { grid-column: 1; }
   .tutorial-grid { grid-template-columns: 1fr; }
