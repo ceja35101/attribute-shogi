@@ -1212,7 +1212,7 @@ button.secondary { background: #263449; border: 1px solid rgba(255,255,255,.09);
   .piece { width: 82%; height: 90%; }
   .piece .piece-symbol { font-size: clamp(.92rem, 4.5vw, 1.12rem); }
   .square-attribute-bg { inset: 0; }
-    .square-attribute-bg.attr-fire img,
+  .square-attribute-bg.attr-fire img,
   .square-attribute-bg.attr-water img {
     transform: translateY(-20%);
   }
