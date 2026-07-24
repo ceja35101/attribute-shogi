@@ -1026,17 +1026,17 @@ button.secondary { background: #263449; border: 1px solid rgba(255,255,255,.09);
 /* 属性色の木札と、文字の背後でマス全体へ表示する属性紋章 */
 .piece.piece-attr-fire,
 .hand-piece-icon:has(.attr-fire) {
-  background: linear-gradient(145deg, #f3d09d 0%, #dfa06f 62%, #bd704d 100%) !important;
+  background: linear-gradient(145deg, rgba(255, 224, 166, .78) 0%, rgba(224, 137, 78, .78) 58%, rgba(148, 55, 34, .78) 100%) !important;
 }
 
 .piece.piece-attr-water,
 .hand-piece-icon:has(.attr-water) {
-  background: linear-gradient(145deg, #d7d8c1 0%, #9fbcc1 62%, #688d99 100%) !important;
+  background: linear-gradient(145deg, rgba(229, 244, 232, .78) 0%, rgba(126, 177, 187, .78) 58%, rgba(43, 99, 122, .78) 100%) !important;
 }
 
 .piece.piece-attr-wind,
 .hand-piece-icon:has(.attr-wind) {
-  background: linear-gradient(145deg, #e7d5aa 0%, #c5b783 62%, #907e58 100%) !important;
+  background: linear-gradient(145deg, rgba(248, 224, 162, .78) 0%, rgba(190, 157, 86, .78) 58%, rgba(98, 70, 31, .78) 100%) !important;
 }
 
 .square-attribute-bg {
@@ -1068,7 +1068,7 @@ button.secondary { background: #263449; border: 1px solid rgba(255,255,255,.09);
 .square-attribute-bg.attr-wind img {
   width: 145%;
   height: 145%;
-  transform: translateY(-20%);
+  transform: translateY(20%);
 }
 
 .square-attribute-bg.attr-water {
@@ -1082,6 +1082,11 @@ button.secondary { background: #263449; border: 1px solid rgba(255,255,255,.09);
 .piece .piece-symbol,
 .king-damage,
 .support-used-badge { z-index: 4; }
+
+.piece .piece-symbol,
+.hand-piece-symbol {
+  opacity: .75;
+}
 
 .hand-piece-attr {
   inset: 4% auto auto 50%;
