@@ -1,9 +1,9 @@
-const CACHE_NAME="attribute-shogi-v43";
+const CACHE_NAME="attribute-shogi-v44";
 const ASSETS=[
   "./",
   "./index.html",
   "./styles.css?v=61",
-  "./game-core.js?v=13",
+  "./game-core.js?v=14",
   "./app.js?v=40",
   "./attributes.json",
   "./fire-realistic-v1.png",
