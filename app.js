@@ -1,4 +1,4 @@
-const APP_VERSION="0.1.0-rc.1",SAVE_KEY="attributeShogiSavedGame",SAVE_VERSION=2,INVALID_SAVE_KEY=`${SAVE_KEY}InvalidBackup`;
+const APP_VERSION="0.1.0-rc.1",SAVE_KEY="attributeShogiSavedGame",SAVE_VERSION=3,INVALID_SAVE_KEY=`${SAVE_KEY}InvalidBackup`;
 let replayIndex=null,lastSoundSnapshot=-1,audioContext=null,saveNotice="";
 let soundEnabled=localStorage.getItem("attributeShogiSound")!=="off";
 let soundVolume=Number(localStorage.getItem("attributeShogiVolume")??.7);
@@ -31,6 +31,21 @@ function saveGame(){
   }catch(error){return false}
 }
 
+function migrateSavedPosition(position){
+  if(!position||!Array.isArray(position.board)||!Array.isArray(position.clashes))return position;
+  for(const row of position.board)for(const piece of row)if(piece)piece.supportLocks=Array.isArray(piece.supportLocks)?piece.supportLocks:[];
+  for(const color of [HUMAN,CPU])for(const piece of position.hand?.[color]||[])piece.supportLocks=Array.isArray(piece.supportLocks)?piece.supportLocks:[];
+  for(const clash of position.clashes){
+    clash.id||=`legacy:${clash.startedAt??clash.expiresAt??0}:${clash.x}:${clash.y}`;
+    if(!Array.isArray(clash.support))clash.support=[];
+    for(const slot of clash.support){
+      const piece=position.board?.[slot.y]?.[slot.x];
+      if(piece&&ATTRIBUTE_DATA[piece.attr]?.beats===clash.attr&&!piece.supportLocks.includes(clash.id))piece.supportLocks.push(clash.id);
+    }
+  }
+  return position;
+}
+
 function restoreGame(){
   const raw=localStorage.getItem(SAVE_KEY);
   if(!raw)return null;
@@ -41,11 +56,13 @@ function restoreGame(){
   };
   try{
     const saved=JSON.parse(raw),s=saved?.state;
-    if(saved?.version!==SAVE_VERSION)return reject(`保存形式 ${saved?.version??"不明"}`);
+    if(![2,SAVE_VERSION].includes(saved?.version))return reject(`保存形式 ${saved?.version??"不明"}`);
     if(!Array.isArray(s?.board)||s.board.length!==9||!s.board.every(row=>Array.isArray(row)&&row.length===9))return reject("盤面データ破損");
     const pieces=[...s.board.flat().filter(Boolean),...(s.hand?.white||[]),...(s.hand?.black||[])];
     if(!s.hand||!Array.isArray(s.clashes)||!pieces.every(p=>PIECES[p.type]&&ATTRIBUTE_DATA[p.attr]))return reject("駒または衝突データ破損");
-    return{...s,selected:null,moves:[],aiThinking:false,autoPlay:false,fullLog:Array.isArray(s.fullLog)?s.fullLog:[],log:Array.isArray(s.log)?s.log:[],snapshots:Array.isArray(s.snapshots)?s.snapshots:[],history:Array.isArray(s.history)?s.history:[]};
+    const migrated=migrateSavedPosition(s),snapshots=Array.isArray(migrated.snapshots)?migrated.snapshots:[];
+    for(const snapshot of snapshots)migrateSavedPosition(snapshot?.position);
+    return{...migrated,selected:null,moves:[],aiThinking:false,autoPlay:false,fullLog:Array.isArray(migrated.fullLog)?migrated.fullLog:[],log:Array.isArray(migrated.log)?migrated.log:[],snapshots,history:Array.isArray(migrated.history)?migrated.history:[]};
   }catch(error){return reject("JSON破損")}
 }
 

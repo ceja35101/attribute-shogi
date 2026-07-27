@@ -31,6 +31,8 @@
         const saved={executedAt:new Date().toISOString(),...report};
         localStorage.setItem('attributeShogiSelfPlayResult',JSON.stringify(saved));
         result.textContent=JSON.stringify(saved,null,2);
+        const pass=saved.errors.length===0&&saved.stalled===0&&saved.games===games;
+        document.title=(pass?'PASS':'FAIL')+' - 属性将棋 CPU自己対戦';
         button.disabled=false;
       },50);
     }

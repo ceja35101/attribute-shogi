@@ -27,6 +27,7 @@ python -m http.server 8000
 サーバー起動後、`http://localhost:8000/tests/regression.html` を開きます。
 
 CPU自己対戦は `http://localhost:8000/tests/self-play.html` を開くと100局を自動実行します。
+URLへ `?games=500&maxPlies=600` を付けると、正式リリース向けの500局試験を実行できます。
 
 初期化500回とCPU自己対戦50局の耐久テストは `http://localhost:8000/tests/durability.html` で実行できます。
 
@@ -60,8 +61,8 @@ CPU自己対戦は `http://localhost:8000/tests/self-play.html` を開くと100�
 - 戦闘候補は色に加えて「有利」「不利」「同」「援」の文字を表示します。
 - HTTPSまたはlocalhostで一度起動すると、対応ブラウザーではオフラインキャッシュを利用できます。
 - PWA用アイコンを備え、対応端末ではホーム画面へインストールできます。
-- GitHub ActionsでChrome回帰テストと耐久テストを自動実行します。
-- 古い、または破損した保存データは退避し、新しい対局を安全に開始します。
+- GitHub ActionsでChrome回帰テスト、耐久テスト、500局のCPU自己対局を自動実行します。
+- 直前形式（Version 2）の保存対局は最新ルールへ移行します。対応外または破損した保存データは退避し、新しい対局を安全に開始します。
 
 バージョンと運用情報:
 

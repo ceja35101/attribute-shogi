@@ -5,7 +5,7 @@ const target = process.argv[2];
 const cases = {
   regression: {
     url: "http://127.0.0.1:8000/tests/regression.html",
-    expected: "65/65 件成功",
+    expected: "66/66 件成功",
     timeout: 45_000,
   },
   durability: {
@@ -13,10 +13,15 @@ const cases = {
     expected: "PASS: 耐久テスト完了",
     timeout: 180_000,
   },
+  selfplay: {
+    url: "http://127.0.0.1:8000/tests/self-play.html?games=500&maxPlies=600",
+    expected: '"games": 500',
+    timeout: 300_000,
+  },
 };
 
 if (!cases[target]) {
-  throw new Error("Usage: node tests/run-browser-test.mjs <regression|durability>");
+  throw new Error("Usage: node tests/run-browser-test.mjs <regression|durability|selfplay>");
 }
 
 const test = cases[target];

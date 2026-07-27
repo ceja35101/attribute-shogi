@@ -23,6 +23,8 @@ jobs:
         run: node tests/run-browser-test.mjs regression
       - name: Run durability test
         run: node tests/run-browser-test.mjs durability
+      - name: Run 500 CPU self-play games
+        run: node tests/run-browser-test.mjs selfplay
       - name: Upload diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4
@@ -33,4 +35,6 @@ jobs:
             regression.png
             durability.html
             durability.png
+            selfplay.html
+            selfplay.png
             /tmp/attribute-shogi-server.log

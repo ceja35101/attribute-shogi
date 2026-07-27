@@ -144,6 +144,9 @@
           for(let i=2;i<=8;i++){state.ply=i;addLog('歩 : 1-'+i+' → 1-'+(i+1))}
           check('表示5手とは別に全手棋譜を保持',state.log.length===5&&state.fullLog.length===8);
           saveGame();const restored=restoreGame();
+          const legacyState=initialState(),legacyHelper=piece('knight','white');legacyHelper.attr='wind';legacyState.board=Array.from({length:9},()=>Array(9).fill(null));legacyState.board[3][4]=legacyHelper;legacyState.clashes=[{x:4,y:4,attr:'water',pieces:[piece('bishop','white'),piece('king','black')],attackerColor:'white',support:[{x:4,y:3},{x:4,y:5}],kingCollision:true,startedAt:6,expiresAt:11}];legacyState.snapshots=[{position:JSON.parse(JSON.stringify(legacyState))}];
+          localStorage.setItem(SAVE_KEY,JSON.stringify({version:2,state:legacyState}));const migratedSave=restoreGame(),migratedClash=migratedSave?.clashes[0],migratedSnapshotClash=migratedSave?.snapshots[0]?.position?.clashes[0];
+          check('Version 2保存を移行し既存援軍を使用済みに補正',Boolean(migratedClash?.id)&&migratedSave.board[3][4].supportLocks.includes(migratedClash.id)&&migratedSave.snapshots[0].position.board[3][4].supportLocks.includes(migratedSnapshotClash.id));
           localStorage.setItem(SAVE_KEY,'{broken');saveNotice='';const rejectedSave=restoreGame(),invalidBackup=localStorage.getItem(INVALID_SAVE_KEY);localStorage.removeItem(INVALID_SAVE_KEY);saveGame();
           check('対局を保存・復元し破損データを退避',restored?.ply===8&&restored.fullLog.length===8&&restored.aiThinking===false&&rejectedSave===null&&Boolean(invalidBackup)&&saveNotice.includes('退避'));
           trackLastMove('角 : 持ち駒 → 5-5','white');

@@ -6,8 +6,9 @@
 
 ## ゲーム内素材
 
-- 火・水・風アイコン: 本プロジェクト内で作成した `fire.svg`、`water.svg`、`tornado.svg`
+- 火・水・風アイコン: 本プロジェクト用にAI支援で生成・調整した
+  `fire-realistic-v1.png`、`water-realistic-v1.png`、`wind-realistic-v1.png`
 - 駒、盤、UI: HTML/CSSによる独自描画
 - 効果音: Web Audio APIによる実行時生成音
 
-外部画像・外部音声ファイルへの実行時依存はありません。
+参考画像そのものは配布物へ含めていません。外部画像・外部音声ファイルへの実行時依存はありません。
