@@ -169,7 +169,12 @@
           practiceStep=1;resetPracticeTutorial();document.querySelector('.practice-square.selectable').click();document.querySelector('.practice-square.target').click();
           const supportMarkers=document.querySelectorAll('.practice-support-badge').length===2&&practicePhase==='cpu-support'&&document.querySelector('[data-practice-role="support-source"]');if(practiceCpuTimer)clearTimeout(practiceCpuTimer);finishPracticeCpuSupport();
           const supportCompleted=practiceResolved&&document.getElementById('practice-cpu-hand').querySelector('.hand-piece-icon')&&document.getElementById('practice-result').textContent.includes('援軍勝利');
-          check('6局面の操作型属性チュートリアルを実装',firstPracticePassed&&practiceRules&&PRACTICE_SCENARIOS.length===6&&tutorialOrder&&capturedAnimation&&supportMarkers&&supportCompleted);
+          practiceStep=4;resetPracticeTutorial();document.querySelector('.practice-square.selectable').click();document.querySelector('.practice-square.target').click();
+          const weakKingExplained=practiceResolved&&document.getElementById('practice-king-life').textContent.includes('3')&&document.getElementById('practice-cpu-hand').querySelector('.hand-piece-icon');
+          practiceStep=5;resetPracticeTutorial();document.querySelector('.practice-square.selectable').click();document.querySelector('.practice-square.target').click();
+          const kingOptions=document.querySelectorAll('[data-king-outcome]').length===3;document.querySelector('[data-king-outcome="none"]').click();
+          const sameKingExplained=practiceResolved&&document.getElementById('practice-king-life').textContent.includes('2')&&document.getElementById('practice-result').textContent.includes('耐久を2');
+          check('6局面の操作型属性チュートリアルを実装',firstPracticePassed&&practiceRules&&PRACTICE_SCENARIOS.length===6&&tutorialOrder&&capturedAnimation&&supportMarkers&&supportCompleted&&weakKingExplained&&kingOptions&&sameKingExplained);
           const languageSelect=document.getElementById('language-select');state.message='あなたの番です。駒または持ち駒を選んでください。';uiLanguage='en';applyLanguage();render();
           const englishShown=document.documentElement.lang==='en'&&document.querySelector('.beta-label').textContent==='Free Beta'&&document.querySelector('.piece-symbol')?.textContent.match(/^[KRBGSNLP+]+$/)&&state.message==='Your turn. Select a piece or a piece in hand.';
           languageSelect.value='ja';languageSelect.dispatchEvent(new Event('change'));

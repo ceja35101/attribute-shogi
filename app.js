@@ -107,18 +107,18 @@ const PRACTICE_SCENARIOS=[
     ja:["不利属性で攻撃","風の歩で、強い火の飛車を攻撃してください。","風は火に不利です。","返り討ち。両駒が盤上から消え、攻撃した歩はCPUの持ち駒になりました。"],
     en:["Attack at a disadvantage","Attack the stronger Fire Rook with the Wind Pawn.","Wind is weak against Fire.","Countered. Both pieces left the board, and the attacking Pawn entered CPU Pieces in Hand."]},
   {kind:"basic",attacker:{type:"rook",attr:"water"},defender:{type:"king",attr:"fire"},expected:"capture",
-    ja:["王を有利属性で攻撃","水の飛車で火の王を攻撃してください。","王も属性を持ちます。水は火に勝ちます。","有利属性で王を取りました。攻撃側の勝利です。"],
-    en:["Attack the King with an advantage","Attack the Fire King with the Water Rook.","The King also has an element. Water beats Fire.","The King was captured with an element advantage. The attacker wins."]},
+    ja:["王を有利属性で攻撃","水の飛車で火の王を攻撃してください。","王の耐久は4です。有利属性なら耐久を段階的に削らず、その場で王を取ります。","有利属性で王を取りました。耐久値に関係なく攻撃側の勝利です。"],
+    en:["Attack the King with an advantage","Attack the Fire King with the Water Rook.","The King has 4 durability. An advantageous attack captures the King immediately instead of dealing gradual damage.","The King was captured with an element advantage. The attacker wins regardless of remaining durability."]},
   {kind:"weak-king",attacker:{type:"pawn",attr:"wind"},defender:{type:"king",attr:"fire"},expected:"retaliation",
-    ja:["王を弱属性で攻撃","風の歩で、強い火の王を攻撃してください。","弱属性の王攻撃は短期膠着になります。","王と短期膠着。王側の手番終了後、王の耐久が1減り、攻撃駒は王側の持ち駒になります。"],
-    en:["Attack the King with a weak element","Attack the stronger Fire King with the Wind Pawn.","A weak attack on the King starts a short clash.","Short King clash. After the King's turn, durability drops by 1 and the attacker enters the King's hand."]},
+    ja:["王を弱属性で攻撃","風の歩で、強い火の王を攻撃してください。","王の耐久は4です。弱属性攻撃は短期膠着後に耐久を1削ります。","王と短期膠着。王側の手番終了後、耐久は4から3になり、攻撃駒は王側の持ち駒になります。"],
+    en:["Attack the King with a weak element","Attack the stronger Fire King with the Wind Pawn.","The King has 4 durability. A weak attack deals 1 after the short clash.","Short King clash. After the King's turn, durability falls from 4 to 3 and the attacker enters the King's hand."]},
   {kind:"same-king",attacker:{type:"silver",attr:"fire"},defender:{type:"king",attr:"fire"},expected:"same",
-    ja:["王を同属性で攻撃","火の銀で、同じ火の王を攻撃してください。","王も同属性攻撃では膠着します。","王と同属性膠着。強属性援軍がなければ自然解消時に王の耐久が2減ります。"],
-    en:["Attack the King with the same element","Attack the Fire King with the Fire Silver.","A same-element attack also clashes with the King.","Same-element King clash. Without strong reinforcement, the King loses 2 durability when it expires."]}
+    ja:["王を同属性で攻撃","火の銀で、同じ火の王を攻撃してください。","王の耐久は4です。同属性攻撃は膠着し、援軍なしで自然解消すると耐久を2削ります。","王への同属性攻撃の結果を確認しました。"],
+    en:["Attack the King with the same element","Attack the Fire King with the Fire Silver.","The King has 4 durability. A same-element attack clashes; if it expires without reinforcement, it deals 2.","You reviewed a same-element attack on the King."]}
 ];
-let practiceStep=0,practicePhase="attack",practiceResolved=false,practiceCompleted=false,practiceAnimating=false,practiceRunId=0,practiceCpuTimer=null;
+let practiceStep=0,practicePhase="attack",practiceResolved=false,practiceCompleted=false,practiceAnimating=false,practiceRunId=0,practiceCpuTimer=null,practiceKingOutcome=null;
 
-function resetPracticeTutorial(){practiceRunId++;if(practiceCpuTimer)clearTimeout(practiceCpuTimer);practiceCpuTimer=null;practicePhase="attack";practiceResolved=false;practiceCompleted=false;practiceAnimating=false;renderPracticeTutorial()}
+function resetPracticeTutorial(){practiceRunId++;if(practiceCpuTimer)clearTimeout(practiceCpuTimer);practiceCpuTimer=null;practicePhase="attack";practiceResolved=false;practiceCompleted=false;practiceAnimating=false;practiceKingOutcome=null;renderPracticeTutorial()}
 function practicePieceHtml(spec,color){
   const p={...spec,color,promoted:false};
   return `<span class="square-attribute-bg attr-${p.attr}" aria-hidden="true">${attributeIcon(p.attr)}</span><span class="piece piece-attr-${p.attr} ${color}"><span class="piece-symbol ${color===CPU&&uiLanguage==="ja"?"flipped":""}">${symbol(p)}</span></span>`;
@@ -137,6 +137,7 @@ function resolvePracticeAttack(){
   const scenario=PRACTICE_SCENARIOS[practiceStep],resultType=combat(scenario.attacker.attr,scenario.defender.attr);
   if(resultType!==scenario.expected)throw Error("Tutorial combat mismatch");
   if(scenario.kind==="same-support"){startPracticeCpuSupport();return}
+  if(scenario.kind==="same-king"){practicePhase="king-choice";renderPracticeTutorial();return}
   if(resultType!=="retaliation"||scenario.defender.type==="king"){practiceResolved=true;practicePhase="resolved";renderPracticeTutorial();return}
   practiceAnimating=true;
   const flight=flyPieceToHand(document.querySelector(".practice-square.selectable .piece"),document.getElementById("practice-cpu-hand"));
@@ -159,6 +160,9 @@ function startPracticeCpuSupport(){
   const runId=practiceRunId;
   practiceCpuTimer=setTimeout(()=>movePracticeCpuSupport(runId),650);
 }
+function resolvePracticeKingChoice(outcome){
+  practiceKingOutcome=outcome;practiceResolved=true;practicePhase="resolved";renderPracticeTutorial();
+}
 function renderPracticeTutorial(){
   const board=document.getElementById("practice-board");if(!board||!ATTRIBUTE_DATA)return;
   const scenario=PRACTICE_SCENARIOS[practiceStep],copy=scenario[uiLanguage];
@@ -166,25 +170,44 @@ function renderPracticeTutorial(){
   document.getElementById("practice-title").textContent=copy[0];
   document.getElementById("practice-instruction").textContent=copy[1];
   const result=document.getElementById("practice-result"),supportInstruction=practicePhase==="cpu-support-moving"?bilingual("CPUが水の飛車を援軍位置へ移動しています。","CPU is moving the Water Rook to the reinforcement square."):bilingual("衝突の上下に水属性の援軍位置が表示されました。CPUが水の飛車で援軍を送ります。","Water reinforcement squares appeared above and below the clash. CPU will reinforce with the Water Rook.");
-  result.textContent=practiceCompleted?bilingual("6つの実戦を完了しました。対局で属性戦闘を試してください。","You completed all six battles. Try the element system in a real game."):practiceResolved?copy[3]:practicePhase==="cpu-support"||practicePhase==="cpu-support-moving"?supportInstruction:practicePhase==="selected"?bilingual("相手の駒を選んで攻撃してください。","Now select the opposing piece to attack."):copy[2];
+  const kingOutcomes={
+    attacker:bilingual("攻撃側の強属性援軍が先着すると、王を即座に制圧して攻撃側の勝利です。耐久は残りません。","If the attacker's strong reinforcement arrives first, the King is defeated immediately. No durability remains."),
+    defender:bilingual("王側の強属性援軍が先着すると、王は無傷で復帰します。耐久は4のままで、攻撃駒は王側の持ち駒になります。","If the King's strong reinforcement arrives first, the King returns unharmed at 4 durability and captures the attacker."),
+    none:bilingual("援軍なしで膠着が自然解消すると、王の耐久を2削ります。耐久は4から2になります。攻撃駒は持ち駒にならず消滅します。","Without reinforcement, the clash expires and deals 2 damage. Durability falls from 4 to 2; the attacker vanishes instead of entering a hand.")
+  };
+  result.textContent=practiceCompleted?bilingual("6つの実戦を完了しました。対局で属性戦闘を試してください。","You completed all six battles. Try the element system in a real game."):practiceResolved&&practiceKingOutcome?kingOutcomes[practiceKingOutcome]:practiceResolved?copy[3]:practicePhase==="king-choice"?bilingual("膠着後の3つの結果を、下のボタンから選んで確認してください。","Choose one of the three outcomes below to see what happens after the clash."):practicePhase==="cpu-support"||practicePhase==="cpu-support-moving"?supportInstruction:practicePhase==="selected"?bilingual("相手の駒を選んで攻撃してください。","Now select the opposing piece to attack."):copy[2];
   result.className=`practice-result${practiceResolved?` ${scenario.expected==="capture"||scenario.kind==="same-support"?"success":scenario.expected==="same"?"warning":"error"}`:""}`;
-  const cpuHand=document.getElementById("practice-cpu-hand"),humanHand=document.getElementById("practice-human-hand"),cpuCaptured=practiceResolved&&((scenario.kind==="basic"&&scenario.expected==="retaliation")||scenario.kind==="same-support");
+  const cpuHand=document.getElementById("practice-cpu-hand"),humanHand=document.getElementById("practice-human-hand"),cpuCaptured=practiceResolved&&((scenario.kind==="basic"&&scenario.expected==="retaliation")||scenario.kind==="same-support"||scenario.kind==="weak-king"||(scenario.kind==="same-king"&&practiceKingOutcome==="defender"));
   cpuHand.innerHTML=cpuCaptured?handPieceHtml(scenario.attacker,CPU):`<span class="practice-empty">${bilingual("持ち駒なし","No pieces")}</span>`;
   humanHand.innerHTML=`<span class="practice-empty">${bilingual("持ち駒なし","No pieces")}</span>`;
   board.innerHTML="";
   for(let y=0;y<5;y++)for(let x=0;x<5;x++){
     const square=document.createElement("button");square.type="button";square.className="practice-square";
-    const attacker=x===2&&y===3,defender=x===2&&y===2,supportSource=scenario.kind==="same-support"&&x===0&&y===1,supportTarget=scenario.kind==="same-support"&&x===2&&y===1,otherSupport=scenario.kind==="same-support"&&x===2&&y===3,clashing=practicePhase==="cpu-support"||practicePhase==="cpu-support-moving";
+    const attacker=x===2&&y===3,defender=x===2&&y===2,supportSource=scenario.kind==="same-support"&&x===0&&y===1,supportTarget=scenario.kind==="same-support"&&x===2&&y===1,otherSupport=scenario.kind==="same-support"&&x===2&&y===3,clashing=practicePhase==="cpu-support"||practicePhase==="cpu-support-moving"||practicePhase==="king-choice";
     if(!practiceResolved&&!clashing&&attacker){square.innerHTML=practicePieceHtml(scenario.attacker,HUMAN);square.classList.add("selectable");if(practicePhase==="selected")square.classList.add("selected");square.onclick=()=>{practicePhase="selected";renderPracticeTutorial()}}
     if(!practiceResolved&&!clashing&&defender){square.innerHTML=practicePieceHtml(scenario.defender,CPU);if(practicePhase==="selected")square.classList.add("target");square.onclick=resolvePracticeAttack}
     if(!practiceResolved&&scenario.kind==="same-support"&&supportSource){square.innerHTML=practicePieceHtml(scenario.support,CPU);square.dataset.practiceRole="support-source";if(practicePhase==="cpu-support-moving")square.classList.add("selected")}
     if(!practiceResolved&&clashing&&(supportTarget||otherSupport)){square.innerHTML=`<span class="square-attribute-bg attr-water support-attribute-bg" aria-hidden="true">${attributeIcon("water")}</span><span class="practice-support-badge">${bilingual("援","AID")}</span>`;if(supportTarget){square.dataset.practiceRole="support-target";if(practicePhase==="cpu-support-moving")square.classList.add("target")}}
     if(practiceResolved&&defender&&scenario.expected==="capture")square.innerHTML=practicePieceHtml(scenario.attacker,HUMAN);
-    if((clashing||practiceResolved)&&defender&&(scenario.expected==="same"||scenario.kind==="weak-king"))square.innerHTML=practiceResolved&&scenario.kind==="same-support"?practicePieceHtml(scenario.defender,CPU):`<span class="practice-clash">${scenario.kind==="weak-king"?bilingual("短期膠着","SHORT CLASH"):bilingual("衝突","CLASH")}</span>`;
+    if((clashing||practiceResolved)&&defender&&(scenario.expected==="same"||scenario.kind==="weak-king"))square.innerHTML=practiceResolved&&scenario.kind==="same-support"?practicePieceHtml(scenario.defender,CPU):practiceResolved&&scenario.kind==="weak-king"?practicePieceHtml(scenario.defender,CPU):practiceResolved&&scenario.kind==="same-king"&&practiceKingOutcome==="attacker"?practicePieceHtml(scenario.attacker,HUMAN):practiceResolved&&scenario.kind==="same-king"&&practiceKingOutcome!=="attacker"?practicePieceHtml(scenario.defender,CPU):`<span class="practice-clash">${scenario.kind==="weak-king"?bilingual("短期膠着","SHORT CLASH"):bilingual("衝突","CLASH")}</span>`;
     if(practiceResolved&&scenario.kind==="same-support"&&supportTarget)square.innerHTML=practicePieceHtml(scenario.support,CPU);
     square.setAttribute("aria-label",attacker?bilingual("攻撃する駒","Attacking piece"):defender?bilingual("攻撃対象","Target"):"");
     board.appendChild(square);
   }
+  const life=document.getElementById("practice-king-life"),options=document.getElementById("practice-king-options"),kingScenario=scenario.defender.type==="king";
+  life.hidden=!kingScenario;
+  if(kingScenario){
+    const remaining=scenario.kind==="weak-king"?3:scenario.kind==="same-king"&&practiceKingOutcome==="none"?2:scenario.kind==="same-king"&&practiceKingOutcome==="attacker"?0:4;
+    life.textContent=scenario.expected==="capture"&&practiceResolved?bilingual("王の耐久: 4 → 即敗北","King durability: 4 → immediate defeat"):bilingual(`王の耐久: 4 / 結果後 ${remaining}`.replace("結果後 4","現在 4"),`King durability: 4 / after result ${remaining}`.replace("after result 4","current 4"));
+  }
+  const showKingOptions=scenario.kind==="same-king"&&(practicePhase==="king-choice"||practiceResolved);
+  options.hidden=!showKingOptions;
+  options.innerHTML=showKingOptions?`
+    <p>${bilingual("膠着後の結果","Outcomes after the clash")}</p>
+    <button type="button" data-king-outcome="attacker">${bilingual("・攻撃側の強属性援軍あり：王を即制圧","• Attacker reinforcement: King defeated immediately")}</button>
+    <button type="button" data-king-outcome="defender">${bilingual("・王側の強属性援軍あり：王は無傷、攻撃駒を取得","• King reinforcement: no damage, attacker captured")}</button>
+    <button type="button" data-king-outcome="none">${bilingual("・援軍なし：耐久を2削る（4 → 2）","• No reinforcement: 2 damage (4 → 2)")}</button>`:"";
+  options.querySelectorAll("[data-king-outcome]").forEach(button=>{if(button.dataset.kingOutcome===practiceKingOutcome)button.classList.add("selected");button.onclick=()=>resolvePracticeKingChoice(button.dataset.kingOutcome)});
   document.getElementById("practice-prev").disabled=practiceStep===0;
   const next=document.getElementById("practice-next");
   next.disabled=!practiceResolved||practiceCompleted||practiceAnimating;
