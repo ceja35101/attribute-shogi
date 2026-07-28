@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#111827" />
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
     <title>属性付き将棋</title>
-    <link rel="stylesheet" href="styles.css?v=63" />
+    <link rel="stylesheet" href="styles.css?v=64" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="app-icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon-192.png" />
@@ -19,7 +19,7 @@
             <button id="reset" class="secondary">初期化</button>
             <button id="resign" type="button" class="danger">投了</button>
           </div>
-          <h1>属性付き将棋</h1>
+          <h1>属性付き将棋 <span class="beta-label">無料ベータ</span></h1>
           <button id="open-menu" type="button" class="menu-button secondary" aria-label="ルールと設定を開く" aria-haspopup="dialog">⚙</button>
         </header>
         <div class="status-row">
@@ -96,6 +96,16 @@
             <button id="copy-diagnostics" type="button" class="secondary">診断情報をコピー</button>
           </div>
         </section>
+        <section class="menu-section beta-feedback" aria-labelledby="feedback-title">
+          <h3 id="feedback-title">ベータテスト</h3>
+          <p>遊びにくかった点、不具合、面白かった局面をお知らせください。対局内容は自動送信されません。</p>
+          <div class="game-actions">
+            <button id="copy-feedback-template" type="button" class="secondary">感想テンプレートをコピー</button>
+            <a class="button-link secondary" href="https://github.com/ceja35101/attribute-shogi/issues/new/choose" target="_blank" rel="noopener">不具合・感想を送る</a>
+            <a class="button-link secondary" href="BETA_TEST_GUIDE.md" target="_blank" rel="noopener">テスト参加案内</a>
+          </div>
+          <p class="version-label">Public Beta / Version <span id="app-version">0.1.0-rc.1</span></p>
+        </section>
       </div>
     </dialog>
 
@@ -153,6 +163,6 @@
 
     <footer class="app-footer">属性将棋 Ver0.1.0-rc.1</footer>
     <script src="game-core.js?v=14"></script>
-    <script src="app.js?v=42"></script>
+    <script src="app.js?v=43"></script>
   </body>
 </html>

@@ -1,0 +1,53 @@
+name: ベータ版の感想
+description: 遊びやすさ、面白さ、改善案を送ります
+title: "[ベータ感想] "
+labels: ["feedback"]
+body:
+  - type: dropdown
+    id: shogi
+    attributes:
+      label: 将棋経験
+      options:
+        - ほとんどない
+        - 少し遊んだことがある
+        - よく遊ぶ
+    validations:
+      required: true
+  - type: dropdown
+    id: rules
+    attributes:
+      label: 属性ルールの分かりやすさ
+      options: ["1", "2", "3", "4", "5"]
+    validations:
+      required: true
+  - type: dropdown
+    id: fun
+    attributes:
+      label: 面白さ
+      options: ["1", "2", "3", "4", "5"]
+    validations:
+      required: true
+  - type: textarea
+    id: moments
+    attributes:
+      label: 面白かった・迷った場面
+    validations:
+      required: true
+  - type: textarea
+    id: improvements
+    attributes:
+      label: 改善案・追加してほしい機能
+  - type: dropdown
+    id: purchase
+    attributes:
+      label: 500円の買い切り正式版について
+      options:
+        - 購入したい
+        - 内容によって検討する
+        - 購入しない
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 端末・OS・ブラウザー

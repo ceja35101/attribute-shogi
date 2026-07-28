@@ -64,6 +64,18 @@ h4 {
 .game-header .primary-actions { justify-self: start; }
 .game-header .menu-button { justify-self: end; }
 
+.beta-label {
+  display: inline-block;
+  vertical-align: middle;
+  padding: 2px 6px;
+  border: 1px solid rgba(251, 191, 36, .75);
+  border-radius: 999px;
+  color: #fcd34d;
+  font-size: .58rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
 .menu-button {
   width: 42px;
   height: 42px;
@@ -256,6 +268,28 @@ button.danger:hover { background: #991b1b; }
 .menu-section .result-legend { margin: 0 0 12px; }
 .menu-section .game-settings,
 .menu-section .game-actions { margin: 0; }
+
+.beta-feedback p {
+  margin: 0 0 10px;
+  color: #cbd5e1;
+  font-size: .84rem;
+}
+
+.button-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 8px 14px;
+  color: #fff;
+  font-size: .82rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.button-link.secondary { background: #334155; }
+.button-link:hover { filter: brightness(1.14); }
+.beta-feedback .version-label { margin: 10px 0 0; color: #94a3b8; font-size: .72rem; }
 
 .tutorial-grid {
   display: grid;

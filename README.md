@@ -2,6 +2,8 @@
 
 公開版: [https://ceja35101.github.io/attribute-shogi/](https://ceja35101.github.io/attribute-shogi/)
 
+現在は無料公開ベータです。参加方法と確認項目は [BETA_TEST_GUIDE.md](BETA_TEST_GUIDE.md)、募集方法は [BETA_RECRUITMENT.md](BETA_RECRUITMENT.md) を参照してください。
+
 通常将棋の駒の動き・成り・持ち駒に、火・水・風の三すくみを組み合わせたブラウザゲームです。
 
 王は耐久4を持ちます。弱属性攻撃は1手番の短期膠着後に耐久1、同属性膠着の自然解消は耐久2を減らします。膠着を即解消できる援軍は、衝突属性に勝つ強属性だけです。

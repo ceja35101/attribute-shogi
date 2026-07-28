@@ -78,6 +78,32 @@ async function copyDiagnostics(){
   try{await navigator.clipboard.writeText(details);state.message="診断情報をクリップボードへコピーしました。";state.tone="success"}catch(error){state.message="診断情報をコピーできませんでした。HTTPSまたはlocalhostで開いてください。";state.tone="error"}render();
 }
 
+async function copyFeedbackTemplate(){
+  const template=[
+    "属性将棋 無料ベータ 感想",
+    `Version: ${APP_VERSION}`,
+    `端末・ブラウザー: ${navigator.userAgent}`,
+    "",
+    "1. 将棋経験（なし／少し／よく遊ぶ）:",
+    "2. 属性ルールは理解できましたか（1～5）:",
+    "3. 面白さ（1～5）:",
+    "4. 操作の分かりやすさ（1～5）:",
+    "5. 面白かった・迷った場面:",
+    "6. 発生した不具合と再現手順:",
+    "7. 追加してほしい機能:",
+    "8. 500円の買い切り正式版を購入したいですか（はい／検討する／いいえ）:",
+    "9. その他:"
+  ].join("\n");
+  const button=document.getElementById("copy-feedback-template");
+  try{
+    await navigator.clipboard.writeText(template);
+    button.textContent="コピーしました";
+  }catch(error){
+    button.textContent="コピーできませんでした";
+  }
+  setTimeout(()=>button.textContent="感想テンプレートをコピー",1800);
+}
+
 function playMoveSound(lastMove,tone){
   if(!soundEnabled||!lastMove)return;
   const AudioCtx=window.AudioContext||window.webkitAudioContext;
@@ -420,6 +446,8 @@ function bind(){
   });
   document.getElementById("export-record").addEventListener("click",exportRecord);
   document.getElementById("copy-diagnostics").addEventListener("click",copyDiagnostics);
+  document.getElementById("copy-feedback-template").addEventListener("click",copyFeedbackTemplate);
+  document.getElementById("app-version").textContent=APP_VERSION;
   const resignDialog=document.getElementById("resign-dialog");
   document.getElementById("resign").addEventListener("click",()=>{if(!state.winner&&state.turn===HUMAN&&!state.aiThinking)resignDialog.showModal()});
   document.getElementById("resign-yes").addEventListener("click",()=>{
