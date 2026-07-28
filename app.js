@@ -86,10 +86,12 @@ function applyLanguage(){
   const skip=document.querySelector(".tutorial-check");
   if(skip?.lastChild)skip.lastChild.textContent=bilingual(" 次回から起動時に表示しない"," Do not show at startup again");
   document.querySelector(".tutorial-start").textContent=bilingual("対局を始める","Start Game");
+  document.getElementById("practice-hand-label").textContent=bilingual("相手の持ち駒","Pieces in Hand");
   document.querySelector("#promotion-dialog p").textContent=bilingual("成ると駒の動きが変わります。属性は変化しません。","Promotion changes movement. The element does not change.");
   document.querySelector("#resign-dialog p").textContent=bilingual("投了するとCPUの勝利となり、対局は終了します。","Resigning ends the game with a CPU victory.");
   document.querySelector(".app-footer").textContent=bilingual("属性将棋 Ver0.1.0-rc.1","Elemental Shogi Ver0.1.0-rc.1");
   document.getElementById("language-select").value=uiLanguage;
+  if(state?.message==="あなたの番です。駒または持ち駒を選んでください。"||state?.message==="Your turn. Select a piece or a piece in hand.")state.message=bilingual("あなたの番です。駒または持ち駒を選んでください。","Your turn. Select a piece or a piece in hand.");
   renderPracticeTutorial();
 }
 
@@ -108,12 +110,27 @@ const PRACTICE_SCENARIOS=[
     en:["Attack the King","Attack the Fire King with the Water Rook.","The King also has an element. Water beats Fire.","The King was captured with an element advantage. The attacker wins."]
   }
 ];
-let practiceStep=0,practiceSelected=false,practiceResolved=false,practiceCompleted=false;
+let practiceStep=0,practiceSelected=false,practiceResolved=false,practiceCompleted=false,practiceAnimating=false;
 
-function resetPracticeTutorial(){practiceSelected=false;practiceResolved=false;practiceCompleted=false;renderPracticeTutorial()}
+function resetPracticeTutorial(){practiceSelected=false;practiceResolved=false;practiceCompleted=false;practiceAnimating=false;renderPracticeTutorial()}
 function practicePieceHtml(spec,color){
   const p={...spec,color,promoted:false};
   return `<span class="square-attribute-bg attr-${p.attr}" aria-hidden="true">${attributeIcon(p.attr)}</span><span class="piece piece-attr-${p.attr} ${color}"><span class="piece-symbol ${color===CPU&&uiLanguage==="ja"?"flipped":""}">${symbol(p)}</span></span>`;
+}
+function resolvePracticeAttack(){
+  if(!practiceSelected||practiceResolved||practiceAnimating)return;
+  const scenario=PRACTICE_SCENARIOS[practiceStep],resultType=combat(scenario.attacker.attr,scenario.defender.attr);
+  if(resultType!==scenario.expected)throw Error("Tutorial combat mismatch");
+  if(resultType!=="retaliation"){practiceResolved=true;renderPracticeTutorial();return}
+  practiceAnimating=true;
+  const source=document.querySelector(".practice-square.selectable .piece"),target=document.getElementById("practice-captured");
+  if(!source||!target){practiceAnimating=false;practiceResolved=true;renderPracticeTutorial();return}
+  const from=source.getBoundingClientRect(),to=target.getBoundingClientRect(),flyer=source.cloneNode(true);
+  flyer.classList.add("practice-captured-flyer");
+  Object.assign(flyer.style,{left:`${from.left}px`,top:`${from.top}px`,right:"auto",bottom:"auto",width:`${from.width}px`,height:`${from.height}px`});
+  document.body.appendChild(flyer);
+  requestAnimationFrame(()=>Object.assign(flyer.style,{transform:`translate(${to.left+to.width/2-from.left-from.width/2}px, ${to.top+to.height/2-from.top-from.height/2}px) scale(.72)`,opacity:".9"}));
+  setTimeout(()=>{flyer.remove();practiceAnimating=false;practiceResolved=true;renderPracticeTutorial()},420);
 }
 function renderPracticeTutorial(){
   const board=document.getElementById("practice-board");if(!board||!ATTRIBUTE_DATA)return;
@@ -124,13 +141,14 @@ function renderPracticeTutorial(){
   const result=document.getElementById("practice-result");
   result.textContent=practiceCompleted?bilingual("4つの実戦を完了しました。対局で属性戦闘を試してください。","You completed all four battles. Try the element system in a real game."):practiceResolved?copy[3]:practiceSelected?bilingual("相手の駒を選んで攻撃してください。","Now select the opposing piece to attack."):copy[2];
   result.className=`practice-result${practiceResolved?` ${scenario.expected==="capture"?"success":scenario.expected==="same"?"warning":"error"}`:""}`;
-  document.getElementById("practice-captured").textContent=practiceResolved&&scenario.expected==="retaliation"?bilingual(`相手の持ち駒: ${PIECES[scenario.attacker.type].symbol}`,`Defender's hand: ${PIECES[scenario.attacker.type].en}`):"";
+  const captured=document.getElementById("practice-captured");
+  captured.innerHTML=practiceResolved&&scenario.expected==="retaliation"?practicePieceHtml(scenario.attacker,CPU):"";
   board.innerHTML="";
   for(let y=0;y<5;y++)for(let x=0;x<5;x++){
     const square=document.createElement("button");square.type="button";square.className="practice-square";
     const attacker=x===2&&y===3,defender=x===2&&y===2;
     if(!practiceResolved&&attacker){square.innerHTML=practicePieceHtml(scenario.attacker,HUMAN);square.classList.add("selectable");if(practiceSelected)square.classList.add("selected");square.onclick=()=>{practiceSelected=true;renderPracticeTutorial()}}
-    if(!practiceResolved&&defender){square.innerHTML=practicePieceHtml(scenario.defender,CPU);if(practiceSelected)square.classList.add("target");square.onclick=()=>{if(!practiceSelected)return;const resultType=combat(scenario.attacker.attr,scenario.defender.attr);if(resultType!==scenario.expected)throw Error("Tutorial combat mismatch");practiceResolved=true;renderPracticeTutorial()}}
+    if(!practiceResolved&&defender){square.innerHTML=practicePieceHtml(scenario.defender,CPU);if(practiceSelected)square.classList.add("target");square.onclick=resolvePracticeAttack}
     if(practiceResolved&&defender&&scenario.expected==="capture")square.innerHTML=practicePieceHtml(scenario.attacker,HUMAN);
     if(practiceResolved&&defender&&scenario.expected==="same")square.innerHTML=`<span class="practice-clash">${bilingual("衝突","CLASH")}</span>`;
     square.setAttribute("aria-label",attacker?bilingual("攻撃する駒","Attacking piece"):defender?bilingual("攻撃対象","Target"):"");
@@ -138,7 +156,7 @@ function renderPracticeTutorial(){
   }
   document.getElementById("practice-prev").disabled=practiceStep===0;
   const next=document.getElementById("practice-next");
-  next.disabled=!practiceResolved||practiceCompleted;
+  next.disabled=!practiceResolved||practiceCompleted||practiceAnimating;
   next.textContent=practiceCompleted?bilingual("完了済み","Completed"):practiceStep===PRACTICE_SCENARIOS.length-1?bilingual("完了","Complete"):bilingual("次へ","Next");
 }
 

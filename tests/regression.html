@@ -163,9 +163,12 @@
           practiceStep=0;resetPracticeTutorial();document.querySelector('.practice-square.selectable').click();document.querySelector('.practice-square.target').click();
           const firstPracticePassed=practiceResolved&&document.getElementById('practice-result').textContent.includes('攻撃成功');
           const practiceRules=PRACTICE_SCENARIOS.map(item=>combat(item.attacker.attr,item.defender.attr)===item.expected).every(Boolean);
-          check('4局面の操作型属性チュートリアルを実装',firstPracticePassed&&practiceRules&&PRACTICE_SCENARIOS.length===4);
-          const languageSelect=document.getElementById('language-select');languageSelect.value='en';languageSelect.dispatchEvent(new Event('change'));
-          const englishShown=document.documentElement.lang==='en'&&document.querySelector('.beta-label').textContent==='Free Beta'&&document.querySelector('.piece-symbol')?.textContent.match(/^[KRBGSNLP+]+$/);
+          const startButton=document.querySelector('.tutorial-start'),practicePanel=document.querySelector('.practice-tutorial'),detailGrid=document.querySelector('.tutorial-grid');
+          const tutorialOrder=Boolean(startButton.compareDocumentPosition(practicePanel)&Node.DOCUMENT_POSITION_FOLLOWING)&&Boolean(practicePanel.compareDocumentPosition(detailGrid)&Node.DOCUMENT_POSITION_FOLLOWING);
+          const capturedAnimation=document.getElementById('practice-captured')&&resolvePracticeAttack.toString().includes('practice-captured-flyer');
+          check('4局面の操作型属性チュートリアルを実装',firstPracticePassed&&practiceRules&&PRACTICE_SCENARIOS.length===4&&tutorialOrder&&capturedAnimation);
+          const languageSelect=document.getElementById('language-select');state.message='あなたの番です。駒または持ち駒を選んでください。';languageSelect.value='en';languageSelect.dispatchEvent(new Event('change'));
+          const englishShown=document.documentElement.lang==='en'&&document.querySelector('.beta-label').textContent==='Free Beta'&&document.querySelector('.piece-symbol')?.textContent.match(/^[KRBGSNLP+]+$/)&&state.message==='Your turn. Select a piece or a piece in hand.';
           languageSelect.value='ja';languageSelect.dispatchEvent(new Event('change'));
           check('日本語・英語表示と国際駒表記を切替',englishShown&&document.documentElement.lang==='ja'&&document.querySelector('.beta-label').textContent==='無料ベータ');
           const rulesDialog=document.getElementById('rules-dialog');if(rulesDialog.open)rulesDialog.close();rulesDialog.showModal();
