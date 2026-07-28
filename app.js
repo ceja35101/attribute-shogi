@@ -107,8 +107,14 @@ function selectBoard(x,y){
   const p=state.board[y][x];
   state.selected={kind:"board",x,y};
   state.moves=boardMoves(p,x,y);
-  state.message=`${symbol(p)}（${ATTRIBUTE_DATA[p.attr].label}属性）を選択中。`;
-  state.tone="info";
+  if(!state.moves.length&&kingThreatened(HUMAN)){
+    const origins=[...new Set(allMoves(HUMAN).filter(m=>m.kind==="board").map(m=>coord(m.fromX,m.fromY)))];
+    state.message=`王手中です。この${symbol(p)}では回避できません。${origins.length?`「王手回避可」と表示された駒（${origins.join("、")}）を動かしてください。`:""}`;
+    state.tone="warning";
+  }else{
+    state.message=`${symbol(p)}（${ATTRIBUTE_DATA[p.attr].label}属性）を選択中。`;
+    state.tone="info";
+  }
   render();
 }
 
@@ -153,6 +159,9 @@ function appendMoveArrow(el,lastMove,recent){
 function renderBoard(){
   const shown=shownState(),el=document.getElementById("board"),last=shown.lastMove;
   const recent=replayIndex===null&&last&&Date.now()-last.at<1400;
+  const checkEvasions=replayIndex===null&&shown.turn===HUMAN&&kingThreatened(HUMAN)
+    ?new Set(allMoves(HUMAN).filter(m=>m.kind==="board").map(m=>`${m.fromX},${m.fromY}`))
+    :new Set();
   el.innerHTML="";
   shown.board.forEach((row,y)=>row.forEach((p,x)=>{
     const b=document.createElement("button");
@@ -174,6 +183,7 @@ function renderBoard(){
       if(recent)b.classList.add("recent-move",`effect-${shown.tone||"info"}`);
     }
     if(supportSlot)b.classList.add("support-slot",selectedLocked?"support-unavailable":"support-available");
+    if(checkEvasions.has(`${x},${y}`))b.classList.add("check-evasion-piece");
     if(replayIndex===null&&state.selected?.kind==="board"&&state.selected.x===x&&state.selected.y===y)b.classList.add("selected");
     const m=replayIndex===null&&state.moves.find(v=>v.x===x&&v.y===y);
     if(m)b.classList.add(m.result==="capture"?"capture-target":m.result==="retaliation"?"retaliation-target":m.result==="same"?"same-target":m.result==="support"?"support-target":"move-target");
@@ -190,6 +200,12 @@ function renderBoard(){
       b.title=`${symbol(p)} / ${ATTRIBUTE_DATA[p.attr].label}属性${p.type==="king"?` / 耐久 ${4-(p.weakHits||0)}/4`:""}${lockText}`;
       const lockBadge=lockedClashes.length?`<span class="support-used-badge">援${lockedClashes.map(c=>shown.clashes.indexOf(c)+1).join("・")}×</span>`:"";
       b.innerHTML=`<span class="square-attribute-bg attr-${p.attr}" aria-hidden="true">${attributeIcon(p.attr)}</span><span class="piece piece-attr-${p.attr} ${p.color}"><span class="piece-symbol ${p.color===CPU?"flipped":""}">${symbol(p)}</span>${p.type==="king"&&p.weakHits?`<span class="king-damage">${4-p.weakHits}/4</span>`:""}${lockBadge}</span>`;
+      if(checkEvasions.has(`${x},${y}`)){
+        const badge=document.createElement("span");
+        badge.className="check-evasion-badge";
+        badge.textContent="王手回避可";
+        b.appendChild(badge);
+      }
     }
     if(last?.to.x===x&&last.to.y===y&&last.badge){
       const badge=document.createElement("span");

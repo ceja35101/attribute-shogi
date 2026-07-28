@@ -206,6 +206,11 @@
           check('むずかしいCPUは期限間近の援軍を加点',hardTacticalScore({kind:'board',fromX:2,fromY:4,x:2,y:3,result:'support'},'white')>=3000);
           state=initialState();
           check('初期局面を終局扱いしない',resolveNoLegalMoves()===false&&state.winner===null);
+          state=initialState();state.board=Array.from({length:9},()=>Array(9).fill(null));state.clashes=[];state.hand={white:[],black:[]};state.turn='white';
+          const checkedKing=piece('king','white'),checkingKnight=piece('knight','black'),evasionGold=piece('gold','white'),distantKing=piece('king','black');checkedKing.attr=distantKing.attr='fire';checkingKnight.attr='water';checkingKnight.promoted=true;evasionGold.attr='fire';
+          state.board[8][4]=checkedKing;state.board[7][4]=checkingKnight;state.board[8][5]=evasionGold;state.board[0][0]=distantKing;
+          const goldCanEvade=boardMoves(evasionGold,5,8).some(m=>m.x===4&&m.y===7);renderBoard();
+          check('26手目型の成桂王手は6-9金で回避でき盤上にも表示',kingThreatened('white')&&goldCanEvade&&document.querySelector('[data-x="5"][data-y="8"]').classList.contains('check-evasion-piece'));
           return checks;
         })()`);
       }catch(error){report=[{name:'テスト実行',pass:false,detail:error.stack||String(error)}]}

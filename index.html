@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#111827" />
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
     <title>属性付き将棋</title>
-    <link rel="stylesheet" href="styles.css?v=61" />
+    <link rel="stylesheet" href="styles.css?v=62" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="app-icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon-192.png" />
@@ -16,14 +16,16 @@
       <section class="panel game-panel">
         <header class="game-header">
           <h1>属性付き将棋</h1>
-          <button id="open-menu" type="button" class="menu-button secondary" aria-label="ルールと設定を開く" aria-haspopup="dialog">⚙</button>
+          <div class="header-actions">
+            <div class="primary-actions">
+              <button id="reset" class="secondary">初期化</button>
+              <button id="resign" type="button" class="danger">投了</button>
+            </div>
+            <button id="open-menu" type="button" class="menu-button secondary" aria-label="ルールと設定を開く" aria-haspopup="dialog">⚙</button>
+          </div>
         </header>
         <div class="status-row">
           <div id="turn" class="pill" aria-live="polite">手番: 先手</div>
-          <div class="primary-actions">
-            <button id="reset" class="secondary">初期化</button>
-            <button id="resign" type="button" class="danger">投了</button>
-          </div>
         </div>
         <div id="message" class="message" role="status" aria-live="polite" aria-atomic="true">先手の番です。駒を選んでください。</div>
         <div id="end-actions" class="end-actions" hidden>
@@ -153,6 +155,6 @@
 
     <footer class="app-footer">属性将棋 Ver0.1.0-rc.1</footer>
     <script src="game-core.js?v=14"></script>
-    <script src="app.js?v=41"></script>
+    <script src="app.js?v=42"></script>
   </body>
 </html>
