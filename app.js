@@ -116,9 +116,9 @@ const PRACTICE_SCENARIOS=[
     ja:["王を同属性で攻撃","火の銀で、同じ火の王を攻撃してください。","王も同属性攻撃では膠着します。","王と同属性膠着。強属性援軍がなければ自然解消時に王の耐久が2減ります。"],
     en:["Attack the King with the same element","Attack the Fire King with the Fire Silver.","A same-element attack also clashes with the King.","Same-element King clash. Without strong reinforcement, the King loses 2 durability when it expires."]}
 ];
-let practiceStep=0,practicePhase="attack",practiceResolved=false,practiceCompleted=false,practiceAnimating=false;
+let practiceStep=0,practicePhase="attack",practiceResolved=false,practiceCompleted=false,practiceAnimating=false,practiceRunId=0,practiceCpuTimer=null;
 
-function resetPracticeTutorial(){practicePhase="attack";practiceResolved=false;practiceCompleted=false;practiceAnimating=false;renderPracticeTutorial()}
+function resetPracticeTutorial(){practiceRunId++;if(practiceCpuTimer)clearTimeout(practiceCpuTimer);practiceCpuTimer=null;practicePhase="attack";practiceResolved=false;practiceCompleted=false;practiceAnimating=false;renderPracticeTutorial()}
 function practicePieceHtml(spec,color){
   const p={...spec,color,promoted:false};
   return `<span class="square-attribute-bg attr-${p.attr}" aria-hidden="true">${attributeIcon(p.attr)}</span><span class="piece piece-attr-${p.attr} ${color}"><span class="piece-symbol ${color===CPU&&uiLanguage==="ja"?"flipped":""}">${symbol(p)}</span></span>`;
@@ -136,12 +136,28 @@ function resolvePracticeAttack(){
   if(practicePhase!=="selected"||practiceResolved||practiceAnimating)return;
   const scenario=PRACTICE_SCENARIOS[practiceStep],resultType=combat(scenario.attacker.attr,scenario.defender.attr);
   if(resultType!==scenario.expected)throw Error("Tutorial combat mismatch");
-  if(scenario.kind==="same-support"){practicePhase="support";renderPracticeTutorial();return}
+  if(scenario.kind==="same-support"){startPracticeCpuSupport();return}
   if(resultType!=="retaliation"||scenario.defender.type==="king"){practiceResolved=true;practicePhase="resolved";renderPracticeTutorial();return}
   practiceAnimating=true;
   const flight=flyPieceToHand(document.querySelector(".practice-square.selectable .piece"),document.getElementById("practice-cpu-hand"));
   if(!flight){practiceAnimating=false;practiceResolved=true;practicePhase="resolved";renderPracticeTutorial();return}
   flight.then(()=>{practiceAnimating=false;practiceResolved=true;practicePhase="resolved";renderPracticeTutorial()});
+}
+function finishPracticeCpuSupport(){
+  practiceAnimating=false;practiceResolved=true;practicePhase="resolved";renderPracticeTutorial();
+}
+function movePracticeCpuSupport(runId){
+  if(runId!==practiceRunId||practiceStep!==1||practiceResolved)return;
+  practicePhase="cpu-support-moving";practiceAnimating=true;renderPracticeTutorial();
+  const source=document.querySelector('.practice-square[data-practice-role="support-source"] .piece'),target=document.querySelector('.practice-square[data-practice-role="support-target"]');
+  const flight=flyPieceToHand(source,target,460);
+  if(!flight){finishPracticeCpuSupport();return}
+  flight.then(()=>{if(runId===practiceRunId)finishPracticeCpuSupport()});
+}
+function startPracticeCpuSupport(){
+  practicePhase="cpu-support";renderPracticeTutorial();
+  const runId=practiceRunId;
+  practiceCpuTimer=setTimeout(()=>movePracticeCpuSupport(runId),650);
 }
 function renderPracticeTutorial(){
   const board=document.getElementById("practice-board");if(!board||!ATTRIBUTE_DATA)return;
@@ -149,8 +165,8 @@ function renderPracticeTutorial(){
   document.getElementById("practice-progress").textContent=bilingual(`実戦 ${practiceStep+1} / ${PRACTICE_SCENARIOS.length}`,`Practice ${practiceStep+1} / ${PRACTICE_SCENARIOS.length}`);
   document.getElementById("practice-title").textContent=copy[0];
   document.getElementById("practice-instruction").textContent=copy[1];
-  const result=document.getElementById("practice-result"),supportInstruction=bilingual("衝突の上下に水属性の援軍位置が表示されました。左上の水の飛車を選び、上側の援軍位置へ移動してください。","Water reinforcement squares now appear above and below the clash. Select the Water Rook at upper left, then move it to the upper reinforcement square.");
-  result.textContent=practiceCompleted?bilingual("6つの実戦を完了しました。対局で属性戦闘を試してください。","You completed all six battles. Try the element system in a real game."):practiceResolved?copy[3]:practicePhase==="support"||practicePhase==="support-target"?supportInstruction:practicePhase==="selected"?bilingual("相手の駒を選んで攻撃してください。","Now select the opposing piece to attack."):copy[2];
+  const result=document.getElementById("practice-result"),supportInstruction=practicePhase==="cpu-support-moving"?bilingual("CPUが水の飛車を援軍位置へ移動しています。","CPU is moving the Water Rook to the reinforcement square."):bilingual("衝突の上下に水属性の援軍位置が表示されました。CPUが水の飛車で援軍を送ります。","Water reinforcement squares appeared above and below the clash. CPU will reinforce with the Water Rook.");
+  result.textContent=practiceCompleted?bilingual("6つの実戦を完了しました。対局で属性戦闘を試してください。","You completed all six battles. Try the element system in a real game."):practiceResolved?copy[3]:practicePhase==="cpu-support"||practicePhase==="cpu-support-moving"?supportInstruction:practicePhase==="selected"?bilingual("相手の駒を選んで攻撃してください。","Now select the opposing piece to attack."):copy[2];
   result.className=`practice-result${practiceResolved?` ${scenario.expected==="capture"||scenario.kind==="same-support"?"success":scenario.expected==="same"?"warning":"error"}`:""}`;
   const cpuHand=document.getElementById("practice-cpu-hand"),humanHand=document.getElementById("practice-human-hand"),cpuCaptured=practiceResolved&&((scenario.kind==="basic"&&scenario.expected==="retaliation")||scenario.kind==="same-support");
   cpuHand.innerHTML=cpuCaptured?handPieceHtml(scenario.attacker,CPU):`<span class="practice-empty">${bilingual("持ち駒なし","No pieces")}</span>`;
@@ -158,11 +174,11 @@ function renderPracticeTutorial(){
   board.innerHTML="";
   for(let y=0;y<5;y++)for(let x=0;x<5;x++){
     const square=document.createElement("button");square.type="button";square.className="practice-square";
-    const attacker=x===2&&y===3,defender=x===2&&y===2,supportSource=scenario.kind==="same-support"&&x===0&&y===1,supportTarget=scenario.kind==="same-support"&&x===2&&y===1,otherSupport=scenario.kind==="same-support"&&x===2&&y===3,clashing=practicePhase==="support"||practicePhase==="support-target";
+    const attacker=x===2&&y===3,defender=x===2&&y===2,supportSource=scenario.kind==="same-support"&&x===0&&y===1,supportTarget=scenario.kind==="same-support"&&x===2&&y===1,otherSupport=scenario.kind==="same-support"&&x===2&&y===3,clashing=practicePhase==="cpu-support"||practicePhase==="cpu-support-moving";
     if(!practiceResolved&&!clashing&&attacker){square.innerHTML=practicePieceHtml(scenario.attacker,HUMAN);square.classList.add("selectable");if(practicePhase==="selected")square.classList.add("selected");square.onclick=()=>{practicePhase="selected";renderPracticeTutorial()}}
     if(!practiceResolved&&!clashing&&defender){square.innerHTML=practicePieceHtml(scenario.defender,CPU);if(practicePhase==="selected")square.classList.add("target");square.onclick=resolvePracticeAttack}
-    if(!practiceResolved&&scenario.kind==="same-support"&&supportSource){square.innerHTML=practicePieceHtml(scenario.support,CPU);if(practicePhase==="support")square.classList.add("selectable");if(practicePhase==="support-target")square.classList.add("selected");square.onclick=()=>{if(practicePhase==="support"){practicePhase="support-target";renderPracticeTutorial()}}}
-    if(!practiceResolved&&clashing&&(supportTarget||otherSupport)){square.innerHTML=`<span class="square-attribute-bg attr-water support-attribute-bg" aria-hidden="true">${attributeIcon("water")}</span><span class="practice-support-badge">${bilingual("援","AID")}</span>`;if(practicePhase==="support-target"&&supportTarget){square.classList.add("target");square.onclick=()=>{practiceResolved=true;practicePhase="resolved";renderPracticeTutorial()}}}
+    if(!practiceResolved&&scenario.kind==="same-support"&&supportSource){square.innerHTML=practicePieceHtml(scenario.support,CPU);square.dataset.practiceRole="support-source";if(practicePhase==="cpu-support-moving")square.classList.add("selected")}
+    if(!practiceResolved&&clashing&&(supportTarget||otherSupport)){square.innerHTML=`<span class="square-attribute-bg attr-water support-attribute-bg" aria-hidden="true">${attributeIcon("water")}</span><span class="practice-support-badge">${bilingual("援","AID")}</span>`;if(supportTarget){square.dataset.practiceRole="support-target";if(practicePhase==="cpu-support-moving")square.classList.add("target")}}
     if(practiceResolved&&defender&&scenario.expected==="capture")square.innerHTML=practicePieceHtml(scenario.attacker,HUMAN);
     if((clashing||practiceResolved)&&defender&&(scenario.expected==="same"||scenario.kind==="weak-king"))square.innerHTML=practiceResolved&&scenario.kind==="same-support"?practicePieceHtml(scenario.defender,CPU):`<span class="practice-clash">${scenario.kind==="weak-king"?bilingual("短期膠着","SHORT CLASH"):bilingual("衝突","CLASH")}</span>`;
     if(practiceResolved&&scenario.kind==="same-support"&&supportTarget)square.innerHTML=practicePieceHtml(scenario.support,CPU);
