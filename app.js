@@ -86,7 +86,8 @@ function applyLanguage(){
   const skip=document.querySelector(".tutorial-check");
   if(skip?.lastChild)skip.lastChild.textContent=bilingual(" 次回から起動時に表示しない"," Do not show at startup again");
   document.querySelector(".tutorial-start").textContent=bilingual("対局を始める","Start Game");
-  document.getElementById("practice-hand-label").textContent=bilingual("相手の持ち駒","Pieces in Hand");
+  document.getElementById("practice-cpu-hand-label").textContent=bilingual("CPUの持ち駒","CPU Pieces in Hand");
+  document.getElementById("practice-human-hand-label").textContent=bilingual("自分の持ち駒","Your Pieces in Hand");
   document.querySelector("#promotion-dialog p").textContent=bilingual("成ると駒の動きが変わります。属性は変化しません。","Promotion changes movement. The element does not change.");
   document.querySelector("#resign-dialog p").textContent=bilingual("投了するとCPUの勝利となり、対局は終了します。","Resigning ends the game with a CPU victory.");
   document.querySelector(".app-footer").textContent=bilingual("属性将棋 Ver0.1.0-rc.1","Elemental Shogi Ver0.1.0-rc.1");
@@ -96,41 +97,51 @@ function applyLanguage(){
 }
 
 const PRACTICE_SCENARIOS=[
-  {attacker:{type:"pawn",attr:"fire"},defender:{type:"silver",attr:"wind"},expected:"capture",
+  {kind:"basic",attacker:{type:"pawn",attr:"fire"},defender:{type:"silver",attr:"wind"},expected:"capture",
     ja:["有利属性で攻撃","火の歩を選び、風の銀を攻撃してください。","火は風に勝ちます。","攻撃成功。銀を取り、歩がそのマスへ進みました。"],
     en:["Attack with an advantage","Select the Fire Pawn, then attack the Wind Silver.","Fire beats Wind.","Success. The Pawn captured the Silver and moved onto its square."]},
-  {attacker:{type:"silver",attr:"fire"},defender:{type:"gold",attr:"fire"},expected:"same",
-    ja:["同属性で攻撃","火の銀で、同じ火の金を攻撃してください。","同属性は衝突します。","両駒が衝突し、そのマスは一時的に封鎖されました。"],
-    en:["Attack the same element","Attack the Fire Gold with the Fire Silver.","Matching elements cause a clash.","The pieces clashed, temporarily blocking that square."]},
-  {attacker:{type:"pawn",attr:"wind"},defender:{type:"rook",attr:"fire"},expected:"retaliation",
-    ja:["不利属性で攻撃","風の歩で、強い火の飛車を攻撃してください。","風は火に不利です。","返り討ち。両駒が盤上から消え、攻撃した歩は相手の持ち駒になりました。"],
-    en:["Attack at a disadvantage","Attack the stronger Fire Rook with the Wind Pawn.","Wind is weak against Fire.","Countered. Both pieces left the board, and the attacking Pawn entered the defender's hand."]},
-  {attacker:{type:"rook",attr:"water"},defender:{type:"king",attr:"fire"},expected:"capture",
-    ja:["王を攻撃","水の飛車で火の王を攻撃してください。","王も属性を持ちます。水は火に勝ちます。","有利属性で王を取りました。攻撃側の勝利です。"],
-    en:["Attack the King","Attack the Fire King with the Water Rook.","The King also has an element. Water beats Fire.","The King was captured with an element advantage. The attacker wins."]
-  }
+  {kind:"same-support",attacker:{type:"silver",attr:"fire"},defender:{type:"gold",attr:"fire"},support:{type:"rook",attr:"water"},expected:"same",
+    ja:["同属性衝突と援軍","火の銀で火の金を攻撃し、衝突を発生させてください。","同属性は衝突します。","水の援軍が火属性の衝突を制し、CPUが援軍勝利しました。"],
+    en:["Same-element clash and aid","Attack the Fire Gold with the Fire Silver to start a clash.","Matching elements cause a clash.","The Water reinforcement defeated the Fire clash. CPU wins the clash."]},
+  {kind:"basic",attacker:{type:"pawn",attr:"wind"},defender:{type:"rook",attr:"fire"},expected:"retaliation",
+    ja:["不利属性で攻撃","風の歩で、強い火の飛車を攻撃してください。","風は火に不利です。","返り討ち。両駒が盤上から消え、攻撃した歩はCPUの持ち駒になりました。"],
+    en:["Attack at a disadvantage","Attack the stronger Fire Rook with the Wind Pawn.","Wind is weak against Fire.","Countered. Both pieces left the board, and the attacking Pawn entered CPU Pieces in Hand."]},
+  {kind:"basic",attacker:{type:"rook",attr:"water"},defender:{type:"king",attr:"fire"},expected:"capture",
+    ja:["王を有利属性で攻撃","水の飛車で火の王を攻撃してください。","王も属性を持ちます。水は火に勝ちます。","有利属性で王を取りました。攻撃側の勝利です。"],
+    en:["Attack the King with an advantage","Attack the Fire King with the Water Rook.","The King also has an element. Water beats Fire.","The King was captured with an element advantage. The attacker wins."]},
+  {kind:"weak-king",attacker:{type:"pawn",attr:"wind"},defender:{type:"king",attr:"fire"},expected:"retaliation",
+    ja:["王を弱属性で攻撃","風の歩で、強い火の王を攻撃してください。","弱属性の王攻撃は短期膠着になります。","王と短期膠着。王側の手番終了後、王の耐久が1減り、攻撃駒は王側の持ち駒になります。"],
+    en:["Attack the King with a weak element","Attack the stronger Fire King with the Wind Pawn.","A weak attack on the King starts a short clash.","Short King clash. After the King's turn, durability drops by 1 and the attacker enters the King's hand."]},
+  {kind:"same-king",attacker:{type:"silver",attr:"fire"},defender:{type:"king",attr:"fire"},expected:"same",
+    ja:["王を同属性で攻撃","火の銀で、同じ火の王を攻撃してください。","王も同属性攻撃では膠着します。","王と同属性膠着。強属性援軍がなければ自然解消時に王の耐久が2減ります。"],
+    en:["Attack the King with the same element","Attack the Fire King with the Fire Silver.","A same-element attack also clashes with the King.","Same-element King clash. Without strong reinforcement, the King loses 2 durability when it expires."]}
 ];
-let practiceStep=0,practiceSelected=false,practiceResolved=false,practiceCompleted=false,practiceAnimating=false;
+let practiceStep=0,practicePhase="attack",practiceResolved=false,practiceCompleted=false,practiceAnimating=false;
 
-function resetPracticeTutorial(){practiceSelected=false;practiceResolved=false;practiceCompleted=false;practiceAnimating=false;renderPracticeTutorial()}
+function resetPracticeTutorial(){practicePhase="attack";practiceResolved=false;practiceCompleted=false;practiceAnimating=false;renderPracticeTutorial()}
 function practicePieceHtml(spec,color){
   const p={...spec,color,promoted:false};
   return `<span class="square-attribute-bg attr-${p.attr}" aria-hidden="true">${attributeIcon(p.attr)}</span><span class="piece piece-attr-${p.attr} ${color}"><span class="piece-symbol ${color===CPU&&uiLanguage==="ja"?"flipped":""}">${symbol(p)}</span></span>`;
 }
-function resolvePracticeAttack(){
-  if(!practiceSelected||practiceResolved||practiceAnimating)return;
-  const scenario=PRACTICE_SCENARIOS[practiceStep],resultType=combat(scenario.attacker.attr,scenario.defender.attr);
-  if(resultType!==scenario.expected)throw Error("Tutorial combat mismatch");
-  if(resultType!=="retaliation"){practiceResolved=true;renderPracticeTutorial();return}
-  practiceAnimating=true;
-  const source=document.querySelector(".practice-square.selectable .piece"),target=document.getElementById("practice-captured");
-  if(!source||!target){practiceAnimating=false;practiceResolved=true;renderPracticeTutorial();return}
+function flyPieceToHand(source,target,duration=420){
+  if(!source||!target)return null;
   const from=source.getBoundingClientRect(),to=target.getBoundingClientRect(),flyer=source.cloneNode(true);
   flyer.classList.add("practice-captured-flyer");
   Object.assign(flyer.style,{left:`${from.left}px`,top:`${from.top}px`,right:"auto",bottom:"auto",width:`${from.width}px`,height:`${from.height}px`});
   document.body.appendChild(flyer);
-  requestAnimationFrame(()=>Object.assign(flyer.style,{transform:`translate(${to.left+to.width/2-from.left-from.width/2}px, ${to.top+to.height/2-from.top-from.height/2}px) scale(.72)`,opacity:".9"}));
-  setTimeout(()=>{flyer.remove();practiceAnimating=false;practiceResolved=true;renderPracticeTutorial()},420);
+  requestAnimationFrame(()=>Object.assign(flyer.style,{transform:`translate(${to.left+Math.min(to.width,52)/2-from.left-from.width/2}px, ${to.top+Math.min(to.height,52)/2-from.top-from.height/2}px) scale(.72)`,opacity:".9"}));
+  return new Promise(resolve=>setTimeout(()=>{flyer.remove();resolve()},duration));
+}
+function resolvePracticeAttack(){
+  if(practicePhase!=="selected"||practiceResolved||practiceAnimating)return;
+  const scenario=PRACTICE_SCENARIOS[practiceStep],resultType=combat(scenario.attacker.attr,scenario.defender.attr);
+  if(resultType!==scenario.expected)throw Error("Tutorial combat mismatch");
+  if(scenario.kind==="same-support"){practicePhase="support";renderPracticeTutorial();return}
+  if(resultType!=="retaliation"||scenario.defender.type==="king"){practiceResolved=true;practicePhase="resolved";renderPracticeTutorial();return}
+  practiceAnimating=true;
+  const flight=flyPieceToHand(document.querySelector(".practice-square.selectable .piece"),document.getElementById("practice-cpu-hand"));
+  if(!flight){practiceAnimating=false;practiceResolved=true;practicePhase="resolved";renderPracticeTutorial();return}
+  flight.then(()=>{practiceAnimating=false;practiceResolved=true;practicePhase="resolved";renderPracticeTutorial()});
 }
 function renderPracticeTutorial(){
   const board=document.getElementById("practice-board");if(!board||!ATTRIBUTE_DATA)return;
@@ -138,19 +149,23 @@ function renderPracticeTutorial(){
   document.getElementById("practice-progress").textContent=bilingual(`実戦 ${practiceStep+1} / ${PRACTICE_SCENARIOS.length}`,`Practice ${practiceStep+1} / ${PRACTICE_SCENARIOS.length}`);
   document.getElementById("practice-title").textContent=copy[0];
   document.getElementById("practice-instruction").textContent=copy[1];
-  const result=document.getElementById("practice-result");
-  result.textContent=practiceCompleted?bilingual("4つの実戦を完了しました。対局で属性戦闘を試してください。","You completed all four battles. Try the element system in a real game."):practiceResolved?copy[3]:practiceSelected?bilingual("相手の駒を選んで攻撃してください。","Now select the opposing piece to attack."):copy[2];
-  result.className=`practice-result${practiceResolved?` ${scenario.expected==="capture"?"success":scenario.expected==="same"?"warning":"error"}`:""}`;
-  const captured=document.getElementById("practice-captured");
-  captured.innerHTML=practiceResolved&&scenario.expected==="retaliation"?practicePieceHtml(scenario.attacker,CPU):"";
+  const result=document.getElementById("practice-result"),supportInstruction=bilingual("衝突の上下に水属性の援軍位置が表示されました。左上の水の飛車を選び、上側の援軍位置へ移動してください。","Water reinforcement squares now appear above and below the clash. Select the Water Rook at upper left, then move it to the upper reinforcement square.");
+  result.textContent=practiceCompleted?bilingual("6つの実戦を完了しました。対局で属性戦闘を試してください。","You completed all six battles. Try the element system in a real game."):practiceResolved?copy[3]:practicePhase==="support"||practicePhase==="support-target"?supportInstruction:practicePhase==="selected"?bilingual("相手の駒を選んで攻撃してください。","Now select the opposing piece to attack."):copy[2];
+  result.className=`practice-result${practiceResolved?` ${scenario.expected==="capture"||scenario.kind==="same-support"?"success":scenario.expected==="same"?"warning":"error"}`:""}`;
+  const cpuHand=document.getElementById("practice-cpu-hand"),humanHand=document.getElementById("practice-human-hand"),cpuCaptured=practiceResolved&&((scenario.kind==="basic"&&scenario.expected==="retaliation")||scenario.kind==="same-support");
+  cpuHand.innerHTML=cpuCaptured?handPieceHtml(scenario.attacker,CPU):`<span class="practice-empty">${bilingual("持ち駒なし","No pieces")}</span>`;
+  humanHand.innerHTML=`<span class="practice-empty">${bilingual("持ち駒なし","No pieces")}</span>`;
   board.innerHTML="";
   for(let y=0;y<5;y++)for(let x=0;x<5;x++){
     const square=document.createElement("button");square.type="button";square.className="practice-square";
-    const attacker=x===2&&y===3,defender=x===2&&y===2;
-    if(!practiceResolved&&attacker){square.innerHTML=practicePieceHtml(scenario.attacker,HUMAN);square.classList.add("selectable");if(practiceSelected)square.classList.add("selected");square.onclick=()=>{practiceSelected=true;renderPracticeTutorial()}}
-    if(!practiceResolved&&defender){square.innerHTML=practicePieceHtml(scenario.defender,CPU);if(practiceSelected)square.classList.add("target");square.onclick=resolvePracticeAttack}
+    const attacker=x===2&&y===3,defender=x===2&&y===2,supportSource=scenario.kind==="same-support"&&x===0&&y===1,supportTarget=scenario.kind==="same-support"&&x===2&&y===1,otherSupport=scenario.kind==="same-support"&&x===2&&y===3,clashing=practicePhase==="support"||practicePhase==="support-target";
+    if(!practiceResolved&&!clashing&&attacker){square.innerHTML=practicePieceHtml(scenario.attacker,HUMAN);square.classList.add("selectable");if(practicePhase==="selected")square.classList.add("selected");square.onclick=()=>{practicePhase="selected";renderPracticeTutorial()}}
+    if(!practiceResolved&&!clashing&&defender){square.innerHTML=practicePieceHtml(scenario.defender,CPU);if(practicePhase==="selected")square.classList.add("target");square.onclick=resolvePracticeAttack}
+    if(!practiceResolved&&scenario.kind==="same-support"&&supportSource){square.innerHTML=practicePieceHtml(scenario.support,CPU);if(practicePhase==="support")square.classList.add("selectable");if(practicePhase==="support-target")square.classList.add("selected");square.onclick=()=>{if(practicePhase==="support"){practicePhase="support-target";renderPracticeTutorial()}}}
+    if(!practiceResolved&&clashing&&(supportTarget||otherSupport)){square.innerHTML=`<span class="square-attribute-bg attr-water support-attribute-bg" aria-hidden="true">${attributeIcon("water")}</span><span class="practice-support-badge">${bilingual("援","AID")}</span>`;if(practicePhase==="support-target"&&supportTarget){square.classList.add("target");square.onclick=()=>{practiceResolved=true;practicePhase="resolved";renderPracticeTutorial()}}}
     if(practiceResolved&&defender&&scenario.expected==="capture")square.innerHTML=practicePieceHtml(scenario.attacker,HUMAN);
-    if(practiceResolved&&defender&&scenario.expected==="same")square.innerHTML=`<span class="practice-clash">${bilingual("衝突","CLASH")}</span>`;
+    if((clashing||practiceResolved)&&defender&&(scenario.expected==="same"||scenario.kind==="weak-king"))square.innerHTML=practiceResolved&&scenario.kind==="same-support"?practicePieceHtml(scenario.defender,CPU):`<span class="practice-clash">${scenario.kind==="weak-king"?bilingual("短期膠着","SHORT CLASH"):bilingual("衝突","CLASH")}</span>`;
+    if(practiceResolved&&scenario.kind==="same-support"&&supportTarget)square.innerHTML=practicePieceHtml(scenario.support,CPU);
     square.setAttribute("aria-label",attacker?bilingual("攻撃する駒","Attacking piece"):defender?bilingual("攻撃対象","Target"):"");
     board.appendChild(square);
   }
@@ -159,6 +174,16 @@ function renderPracticeTutorial(){
   next.disabled=!practiceResolved||practiceCompleted||practiceAnimating;
   next.textContent=practiceCompleted?bilingual("完了済み","Completed"):practiceStep===PRACTICE_SCENARIOS.length-1?bilingual("完了","Complete"):bilingual("次へ","Next");
 }
+
+const executeCore=execute;
+function animateMainRetaliation(m){
+  if(state.autoPlay||m.kind!=="board"||m.result!=="retaliation")return null;
+  const target=state.board[m.y]?.[m.x];
+  if(!target||target.type==="king")return null;
+  const source=document.querySelector(`.square[data-x="${m.fromX}"][data-y="${m.fromY}"] .piece`),hand=document.getElementById(target.color===CPU?"cpu-stock":"human-stock");
+  return source&&hand?flyPieceToHand(source,hand,360):null;
+}
+execute=function(m,cpu=false){const flight=animateMainRetaliation(m);return flight?flight.then(()=>executeCore(m,cpu)):executeCore(m,cpu)};
 
 function saveGame(){
   if(!state||state.autoPlay||replayIndex!==null)return false;

@@ -165,8 +165,11 @@
           const practiceRules=PRACTICE_SCENARIOS.map(item=>combat(item.attacker.attr,item.defender.attr)===item.expected).every(Boolean);
           const startButton=document.querySelector('.tutorial-start'),practicePanel=document.querySelector('.practice-tutorial'),detailGrid=document.querySelector('.tutorial-grid');
           const tutorialOrder=Boolean(startButton.compareDocumentPosition(practicePanel)&Node.DOCUMENT_POSITION_FOLLOWING)&&Boolean(practicePanel.compareDocumentPosition(detailGrid)&Node.DOCUMENT_POSITION_FOLLOWING);
-          const capturedAnimation=document.getElementById('practice-captured')&&resolvePracticeAttack.toString().includes('practice-captured-flyer');
-          check('4局面の操作型属性チュートリアルを実装',firstPracticePassed&&practiceRules&&PRACTICE_SCENARIOS.length===4&&tutorialOrder&&capturedAnimation);
+          const capturedAnimation=document.getElementById('practice-cpu-hand')&&document.getElementById('practice-human-hand')&&flyPieceToHand.toString().includes('practice-captured-flyer')&&animateMainRetaliation.toString().includes('cpu-stock');
+          practiceStep=1;resetPracticeTutorial();document.querySelector('.practice-square.selectable').click();document.querySelector('.practice-square.target').click();
+          const supportMarkers=document.querySelectorAll('.practice-support-badge').length===2;document.querySelector('.practice-square.selectable').click();document.querySelector('.practice-square.target').click();
+          const supportCompleted=practiceResolved&&document.getElementById('practice-cpu-hand').querySelector('.hand-piece-icon')&&document.getElementById('practice-result').textContent.includes('援軍勝利');
+          check('6局面の操作型属性チュートリアルを実装',firstPracticePassed&&practiceRules&&PRACTICE_SCENARIOS.length===6&&tutorialOrder&&capturedAnimation&&supportMarkers&&supportCompleted);
           const languageSelect=document.getElementById('language-select');state.message='あなたの番です。駒または持ち駒を選んでください。';uiLanguage='en';applyLanguage();render();
           const englishShown=document.documentElement.lang==='en'&&document.querySelector('.beta-label').textContent==='Free Beta'&&document.querySelector('.piece-symbol')?.textContent.match(/^[KRBGSNLP+]+$/)&&state.message==='Your turn. Select a piece or a piece in hand.';
           languageSelect.value='ja';languageSelect.dispatchEvent(new Event('change'));

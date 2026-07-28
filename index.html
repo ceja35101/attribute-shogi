@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#111827" />
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
     <title>属性付き将棋</title>
-    <link rel="stylesheet" href="styles.css?v=66" />
+    <link rel="stylesheet" href="styles.css?v=67" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="app-icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon-192.png" />
@@ -131,10 +131,18 @@
             <button id="practice-reset" type="button" class="secondary">やり直す</button>
           </div>
           <p id="practice-instruction">自分の駒を選び、次に相手の駒を選んでください。</p>
-          <div id="practice-board" class="practice-board" aria-label="操作型属性チュートリアル"></div>
-          <div class="practice-hand">
-            <span id="practice-hand-label">相手の持ち駒</span>
-            <div id="practice-captured" class="practice-captured" aria-live="polite"></div>
+          <div class="practice-play-layout">
+            <div id="practice-board" class="practice-board" aria-label="操作型属性チュートリアル"></div>
+            <aside class="practice-sidebar" aria-label="チュートリアルの持ち駒">
+              <section class="practice-hand-panel">
+                <h4 id="practice-cpu-hand-label">CPUの持ち駒</h4>
+                <div id="practice-cpu-hand" class="practice-stock" aria-live="polite"></div>
+              </section>
+              <section class="practice-hand-panel">
+                <h4 id="practice-human-hand-label">自分の持ち駒</h4>
+                <div id="practice-human-hand" class="practice-stock"></div>
+              </section>
+            </aside>
           </div>
           <p id="practice-result" class="practice-result" role="status" aria-live="polite">火は風に勝ちます。</p>
           <div class="practice-actions">
@@ -189,6 +197,6 @@
 
     <footer class="app-footer">属性将棋 Ver0.1.0-rc.1</footer>
     <script src="game-core.js?v=16"></script>
-    <script src="app.js?v=45"></script>
+    <script src="app.js?v=46"></script>
   </body>
 </html>
