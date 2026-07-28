@@ -20,7 +20,7 @@
   <script>
     const frame=document.getElementById('game'),button=document.getElementById('run'),result=document.getElementById('result');let started=false;
     function startWhenReady(){if(started)return;if(frame.contentDocument?.querySelectorAll('.square').length===81){started=true;button.disabled=false;runTests();return}setTimeout(startWhenReady,100)}
-    localStorage.setItem('attributeShogiTutorialSeen','yes');localStorage.removeItem('attributeShogiSavedGame');
+    localStorage.setItem('attributeShogiTutorialSeen','yes');localStorage.setItem('attributeShogiLanguage','ja');localStorage.removeItem('attributeShogiSavedGame');
     frame.addEventListener('load',startWhenReady);frame.src='../index.html?selfPlay=rc1';startWhenReady();
     button.addEventListener('click',runTests);
     function runTests(){

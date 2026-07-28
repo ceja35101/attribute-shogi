@@ -1,5 +1,5 @@
 {
-  "fire": { "label": "火", "icon": "fire-realistic-v1.png", "iconType": "image", "beats": "wind" },
-  "water": { "label": "水", "icon": "water-realistic-v1.png", "iconType": "image", "beats": "fire" },
-  "wind": { "label": "風", "icon": "wind-realistic-v1.png", "iconType": "image", "beats": "water" }
+  "fire": { "label": "火", "labelEn": "Fire", "icon": "fire-realistic-v1.png", "iconType": "image", "beats": "wind" },
+  "water": { "label": "水", "labelEn": "Water", "icon": "water-realistic-v1.png", "iconType": "image", "beats": "fire" },
+  "wind": { "label": "風", "labelEn": "Wind", "icon": "wind-realistic-v1.png", "iconType": "image", "beats": "water" }
 }

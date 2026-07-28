@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#111827" />
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
     <title>属性付き将棋</title>
-    <link rel="stylesheet" href="styles.css?v=64" />
+    <link rel="stylesheet" href="styles.css?v=65" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="app-icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon-192.png" />
@@ -83,6 +83,12 @@
                 <option value="hard">むずかしい</option>
               </select>
             </label>
+            <label>Language
+              <select id="language-select">
+                <option value="ja">日本語</option>
+                <option value="en">English</option>
+              </select>
+            </label>
             <button id="sound-toggle" type="button" class="secondary" aria-pressed="false">🔊 効果音</button>
             <label>音量 <input id="sound-volume" type="range" min="0" max="1" step="0.1" value="0.7"></label>
           </div>
@@ -138,6 +144,23 @@
             <p>青紫の枠が直前手です。ログや前後ボタンから過去局面を確認できます。「待った」は直前の自分の着手前まで戻し、それ以降の棋譜を破棄します。</p>
           </section>
         </div>
+        <section class="practice-tutorial" aria-labelledby="practice-title">
+          <div class="practice-heading">
+            <div>
+              <p id="practice-progress" class="practice-progress">実戦 1 / 4</p>
+              <h3 id="practice-title">有利属性で攻撃</h3>
+            </div>
+            <button id="practice-reset" type="button" class="secondary">やり直す</button>
+          </div>
+          <p id="practice-instruction">自分の駒を選び、次に相手の駒を選んでください。</p>
+          <div id="practice-board" class="practice-board" aria-label="操作型属性チュートリアル"></div>
+          <div id="practice-captured" class="practice-captured" aria-live="polite"></div>
+          <p id="practice-result" class="practice-result" role="status" aria-live="polite">火は風に勝ちます。</p>
+          <div class="practice-actions">
+            <button id="practice-prev" type="button" class="secondary">前へ</button>
+            <button id="practice-next" type="button" disabled>攻撃後に次へ</button>
+          </div>
+        </section>
         <label class="tutorial-check"><input id="skip-tutorial" type="checkbox"> 次回から起動時に表示しない</label>
         <button value="start" class="tutorial-start">対局を始める</button>
       </form>
@@ -162,7 +185,7 @@
     </dialog>
 
     <footer class="app-footer">属性将棋 Ver0.1.0-rc.1</footer>
-    <script src="game-core.js?v=14"></script>
-    <script src="app.js?v=43"></script>
+    <script src="game-core.js?v=15"></script>
+    <script src="app.js?v=44"></script>
   </body>
 </html>

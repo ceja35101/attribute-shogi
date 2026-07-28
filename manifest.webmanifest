@@ -1,12 +1,12 @@
 {
-  "name": "属性将棋",
-  "short_name": "属性将棋",
-  "description": "火・水・風の属性相性で毎局の戦略が変わる将棋ゲーム",
+  "name": "Elemental Shogi / 属性将棋",
+  "short_name": "E-Shogi",
+  "description": "A shogi strategy game where Fire, Water, and Wind affinities change every match.",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#111827",
   "theme_color": "#111827",
-  "lang": "ja",
+  "lang": "en",
   "icons": [
     {
       "src": "icon-192.png",

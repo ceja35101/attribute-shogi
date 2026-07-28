@@ -304,6 +304,88 @@ button.danger:hover { background: #991b1b; }
   background: rgba(79,70,229,.08);
 }
 
+.practice-tutorial {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid rgba(96, 165, 250, .45);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, .92);
+}
+
+.practice-heading,
+.practice-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.practice-heading h3,
+.practice-tutorial p { margin: 0; }
+.practice-progress { color: #93c5fd; font-size: .75rem; font-weight: 800; }
+#practice-instruction { margin-top: 8px; color: #e2e8f0; }
+
+.practice-board {
+  display: grid;
+  grid-template-columns: repeat(5, 54px);
+  grid-template-rows: repeat(5, 54px);
+  width: max-content;
+  max-width: 100%;
+  margin: 12px auto;
+  border: 3px solid #6f451f;
+  background: #c8944e;
+}
+
+.practice-square {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  padding: 0;
+  border: 1px solid rgba(76, 45, 18, .72);
+  border-radius: 0;
+  background: #d5a45d;
+  overflow: hidden;
+}
+
+.practice-square:nth-child(even) { background: #ca9650; }
+.practice-square.selectable { box-shadow: inset 0 0 0 4px #2563eb; }
+.practice-square.target { box-shadow: inset 0 0 0 4px #16a34a; }
+.practice-square.selected { box-shadow: inset 0 0 0 5px #f59e0b; }
+.practice-square .square-attribute-bg { z-index: 1; }
+.practice-square .piece { z-index: 2; }
+.practice-square .piece-symbol { font-size: 1.25rem; }
+
+.practice-clash {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 88%;
+  height: 88%;
+  border: 3px dashed #facc15;
+  border-radius: 50%;
+  background: rgba(17, 24, 39, .78);
+  color: #fff;
+  font-weight: 900;
+}
+
+.practice-result {
+  min-height: 2.7em;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #1e293b;
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+.practice-result.success { border-left: 5px solid #22c55e; }
+.practice-result.warning { border-left: 5px solid #f59e0b; }
+.practice-result.error { border-left: 5px solid #ef4444; }
+.practice-captured { min-height: 1.4em; color: #fca5a5; font-weight: 800; text-align: center; }
+.practice-actions { margin-top: 10px; }
+
 .tutorial-grid h3 {
   margin: 0 0 5px;
   color: #c7d2fe;
@@ -1287,6 +1369,11 @@ button.secondary { background: #263449; border: 1px solid rgba(255,255,255,.09);
   .play-sidebar { grid-template-columns: 1fr; }
   .play-sidebar .log-panel { grid-column: 1; }
   .tutorial-grid { grid-template-columns: 1fr; }
+  .practice-board {
+    grid-template-columns: repeat(5, min(15vw, 50px));
+    grid-template-rows: repeat(5, min(15vw, 50px));
+  }
+  .practice-square { width: min(15vw, 50px); height: min(15vw, 50px); }
   .rules-dialog {
     width: calc(100vw - 8px);
     max-width: calc(100vw - 8px);
