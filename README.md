@@ -71,6 +71,10 @@ URLへ `?games=500&maxPlies=600` を付けると、正式リリース向けの50
 - [PRIVACY.md](PRIVACY.md)
 - [LICENSES.md](LICENSES.md)
 
+## ライセンス
+
+本プロジェクトには公開ライセンスを付与していません。すべての権利を留保しており、許可のない複製、改変、再配布、商用利用などを禁止します。詳細は [LICENSE](LICENSE) を参照してください。
+
 ## 開発状況
 
 正式リリースまでの不足項目と優先順位は [RELEASE_READINESS.md](RELEASE_READINESS.md) を参照してください。
