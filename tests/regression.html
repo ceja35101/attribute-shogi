@@ -167,7 +167,7 @@
           const tutorialOrder=Boolean(startButton.compareDocumentPosition(practicePanel)&Node.DOCUMENT_POSITION_FOLLOWING)&&Boolean(practicePanel.compareDocumentPosition(detailGrid)&Node.DOCUMENT_POSITION_FOLLOWING);
           const capturedAnimation=document.getElementById('practice-captured')&&resolvePracticeAttack.toString().includes('practice-captured-flyer');
           check('4局面の操作型属性チュートリアルを実装',firstPracticePassed&&practiceRules&&PRACTICE_SCENARIOS.length===4&&tutorialOrder&&capturedAnimation);
-          const languageSelect=document.getElementById('language-select');state.message='あなたの番です。駒または持ち駒を選んでください。';languageSelect.value='en';languageSelect.dispatchEvent(new Event('change'));
+          const languageSelect=document.getElementById('language-select');state.message='あなたの番です。駒または持ち駒を選んでください。';uiLanguage='en';applyLanguage();render();
           const englishShown=document.documentElement.lang==='en'&&document.querySelector('.beta-label').textContent==='Free Beta'&&document.querySelector('.piece-symbol')?.textContent.match(/^[KRBGSNLP+]+$/)&&state.message==='Your turn. Select a piece or a piece in hand.';
           languageSelect.value='ja';languageSelect.dispatchEvent(new Event('change'));
           check('日本語・英語表示と国際駒表記を切替',englishShown&&document.documentElement.lang==='ja'&&document.querySelector('.beta-label').textContent==='無料ベータ');
