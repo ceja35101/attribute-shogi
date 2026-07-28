@@ -152,7 +152,7 @@
           trackLastMove('角 : 持ち駒 → 5-5','white');
           check('駒打ちに打マークを記録',state.lastMove.kind==='drop'&&state.lastMove.badge==='打'&&state.lastMove.from===null);
           state=initialState();trackLastMove('歩 : 1-7 → 1-6','white');renderBoard();
-          check('盤面に直前手と大判属性背景を表示',document.querySelectorAll('.last-move-from').length===1&&document.querySelectorAll('.last-move-to').length===1&&document.querySelectorAll('.square-attribute-bg').length===40);
+          check('盤面に直前手と大判属性背景を表示',document.querySelectorAll('#board .last-move-from').length===1&&document.querySelectorAll('#board .last-move-to').length===1&&document.querySelectorAll('#board .square-attribute-bg').length===40);
           recordSnapshot();state.ply=1;state.message='CPUが銀を移動しました。';state.tone='info';addLog('銀 : 1-1 → 2-1','black');recordSnapshot();renderLog();showReplay(1);
           const replayMessageRestored=document.getElementById('message').textContent==='CPUが銀を移動しました。',actorShown=document.querySelector('.log-move-button')?.textContent.includes('後手');
           check('棋譜再生で当時のメッセージと着手側を表示',replayIndex===1&&shownState().ply===1&&replayMessageRestored&&actorShown&&(returnToCurrent(),replayIndex===null));
