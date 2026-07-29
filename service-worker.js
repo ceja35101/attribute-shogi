@@ -1,10 +1,10 @@
-const CACHE_NAME="attribute-shogi-v56";
+const CACHE_NAME="attribute-shogi-v57";
 const ASSETS=[
   "./",
   "./index.html",
   "./styles.css?v=69",
   "./game-core.js?v=16",
-  "./app.js?v=50",
+  "./app.js?v=51",
   "./attributes.json",
   "./fire-realistic-v1.png",
   "./water-realistic-v1.png",
@@ -16,7 +16,9 @@ const ASSETS=[
   "./RULES.md",
   "./RULES_EN.md",
   "./BETA_TEST_GUIDE.md",
-  "./BETA_TEST_GUIDE_EN.md"
+  "./BETA_TEST_GUIDE_EN.md",
+  "./PRIVACY.md",
+  "./PRIVACY_EN.md"
 ];
 
 self.addEventListener("install",event=>{

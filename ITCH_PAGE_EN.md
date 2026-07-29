@@ -12,6 +12,8 @@ An advantage captures normally. A disadvantage triggers a counterattack. Matchin
 
 ## Free Public Beta
 
+Version 0.1.0-rc.2
+
 - Play in your browser
 - Japanese and English
 - Interactive battle tutorial

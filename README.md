@@ -4,7 +4,7 @@
 
 現在は無料公開ベータです。参加方法と確認項目は [BETA_TEST_GUIDE.md](BETA_TEST_GUIDE.md)、募集方法は [BETA_RECRUITMENT.md](BETA_RECRUITMENT.md) を参照してください。
 
-English: [Rules](RULES_EN.md) · [Beta Test Guide](BETA_TEST_GUIDE_EN.md) · [itch.io Page Draft](ITCH_PAGE_EN.md)
+English: [Rules](RULES_EN.md) · [Privacy](PRIVACY_EN.md) · [Beta Test Guide](BETA_TEST_GUIDE_EN.md) · [itch.io Page](ITCH_PAGE_EN.md)
 
 通常将棋の駒の動き・成り・持ち駒に、火・水・風の三すくみを組み合わせたブラウザゲームです。
 
@@ -34,6 +34,16 @@ CPU自己対戦は `http://localhost:8000/tests/self-play.html` を開くと100�
 URLへ `?games=500&maxPlies=600` を付けると、正式リリース向けの500局試験を実行できます。
 
 初期化500回とCPU自己対戦50局の耐久テストは `http://localhost:8000/tests/durability.html` で実行できます。
+
+## itch.io配布物
+
+PowerShellで次を実行すると、`index.html`を直下に含むHTML5ゲーム用ZIPを`dist`へ生成します。
+
+```powershell
+.\tools\build-itch.ps1
+```
+
+公開設定と確認手順は [ITCH_RELEASE_CHECKLIST.md](ITCH_RELEASE_CHECKLIST.md)、掲載本文は [日本語](ITCH_PAGE.md)／[English](ITCH_PAGE_EN.md) を参照してください。
 
 ## ルール
 

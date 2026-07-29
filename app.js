@@ -1,4 +1,4 @@
-const APP_VERSION="0.1.0-rc.1",SAVE_KEY="attributeShogiSavedGame",SAVE_VERSION=3,INVALID_SAVE_KEY=`${SAVE_KEY}InvalidBackup`;
+const APP_VERSION="0.1.0-rc.2",SAVE_KEY="attributeShogiSavedGame",SAVE_VERSION=3,INVALID_SAVE_KEY=`${SAVE_KEY}InvalidBackup`;
 let replayIndex=null,lastSoundSnapshot=-1,audioContext=null,saveNotice="";
 let soundEnabled=localStorage.getItem("attributeShogiSound")!=="off";
 let soundVolume=Number(localStorage.getItem("attributeShogiVolume")??.7);
@@ -90,7 +90,7 @@ function applyLanguage(){
   document.getElementById("practice-human-hand-label").textContent=bilingual("自分の持ち駒","Your Pieces in Hand");
   document.querySelector("#promotion-dialog p").textContent=bilingual("成ると駒の動きが変わります。属性は変化しません。","Promotion changes movement. The element does not change.");
   document.querySelector("#resign-dialog p").textContent=bilingual("投了するとCPUの勝利となり、対局は終了します。","Resigning ends the game with a CPU victory.");
-  document.querySelector(".app-footer").textContent=bilingual("属性将棋 Ver0.1.0-rc.1","Elemental Shogi Ver0.1.0-rc.1");
+  document.querySelector(".app-footer").textContent=bilingual(`属性将棋 Ver${APP_VERSION}`,`Elemental Shogi Ver${APP_VERSION}`);
   document.getElementById("language-select").value=uiLanguage;
   const difficultyOptions=document.getElementById("cpu-difficulty")?.options;
   if(difficultyOptions){

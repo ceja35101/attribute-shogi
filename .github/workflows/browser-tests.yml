@@ -9,6 +9,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Build itch.io HTML package
+        shell: pwsh
+        run: ./tools/build-itch.ps1
+      - name: Validate itch.io package entry point
+        run: unzip -l dist/attribute-shogi-0.1.0-rc.2-itch.zip | grep -q ' index.html$'
       - name: Start static server
         run: |
           python3 -m http.server 8000 >/tmp/attribute-shogi-server.log 2>&1 &
@@ -25,6 +30,13 @@ jobs:
         run: node tests/run-browser-test.mjs durability
       - name: Run 500 CPU self-play games
         run: node tests/run-browser-test.mjs selfplay
+      - name: Upload itch.io package
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: attribute-shogi-0.1.0-rc.2-itch
+          path: dist/attribute-shogi-0.1.0-rc.2-itch.zip
+          retention-days: 30
       - name: Upload diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4

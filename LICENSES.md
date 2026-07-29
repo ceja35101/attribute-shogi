@@ -8,6 +8,8 @@
 
 - 火・水・風アイコン: 本プロジェクト用にAI支援で生成・調整した
   `fire-realistic-v1.png`、`water-realistic-v1.png`、`wind-realistic-v1.png`
+- itch.ioカバー画像: 本プロジェクト用にAI支援で生成し630×500pxへ調整した
+  `itch-cover-630x500-v1.jpg`
 - 駒、盤、UI: HTML/CSSによる独自描画
 - 効果音: Web Audio APIによる実行時生成音
 
