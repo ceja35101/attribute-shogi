@@ -92,6 +92,11 @@ function applyLanguage(){
   document.querySelector("#resign-dialog p").textContent=bilingual("投了するとCPUの勝利となり、対局は終了します。","Resigning ends the game with a CPU victory.");
   document.querySelector(".app-footer").textContent=bilingual("属性将棋 Ver0.1.0-rc.1","Elemental Shogi Ver0.1.0-rc.1");
   document.getElementById("language-select").value=uiLanguage;
+  const difficultyOptions=document.getElementById("cpu-difficulty")?.options;
+  if(difficultyOptions){
+    const difficultyLabels=uiLanguage==="en"?["Easy","Normal","Hard"]:["やさしい","ふつう","むずかしい"];
+    [...difficultyOptions].forEach((option,index)=>option.textContent=difficultyLabels[index]);
+  }
   if(state?.message==="あなたの番です。駒または持ち駒を選んでください。"||state?.message==="Your turn. Select a piece or a piece in hand.")state.message=bilingual("あなたの番です。駒または持ち駒を選んでください。","Your turn. Select a piece or a piece in hand.");
   renderPracticeTutorial();
 }

@@ -176,9 +176,9 @@
           const sameKingExplained=practiceResolved&&document.getElementById('practice-king-life').textContent.includes('2')&&document.getElementById('practice-result').textContent.includes('耐久を2');
           check('6局面の操作型属性チュートリアルを実装',firstPracticePassed&&practiceRules&&PRACTICE_SCENARIOS.length===6&&tutorialOrder&&capturedAnimation&&supportMarkers&&supportCompleted&&weakKingExplained&&kingOptions&&sameKingExplained);
           const languageSelect=document.getElementById('language-select');state.message='あなたの番です。駒または持ち駒を選んでください。';uiLanguage='en';applyLanguage();render();
-          const englishShown=document.documentElement.lang==='en'&&document.querySelector('.beta-label').textContent==='Free Beta'&&document.querySelector('.piece-symbol')?.textContent.match(/^[KRBGSNLP+]+$/)&&state.message==='Your turn. Select a piece or a piece in hand.';
+          const englishShown=document.documentElement.lang==='en'&&document.querySelector('.beta-label').textContent==='Free Beta'&&document.querySelector('.piece-symbol')?.textContent.match(/^[KRBGSNLP+]+$/)&&state.message==='Your turn. Select a piece or a piece in hand.'&&[...document.getElementById('cpu-difficulty').options].map(option=>option.textContent).join('/')==='Easy/Normal/Hard';
           languageSelect.value='ja';languageSelect.dispatchEvent(new Event('change'));
-          check('日本語・英語表示と国際駒表記を切替',englishShown&&document.documentElement.lang==='ja'&&document.querySelector('.beta-label').textContent==='無料ベータ');
+          check('日本語・英語表示と国際駒表記を切替',englishShown&&document.documentElement.lang==='ja'&&document.querySelector('.beta-label').textContent==='無料ベータ'&&[...document.getElementById('cpu-difficulty').options].map(option=>option.textContent).join('/')==='やさしい/ふつう/むずかしい');
           const rulesDialog=document.getElementById('rules-dialog');if(rulesDialog.open)rulesDialog.close();rulesDialog.showModal();
           check('ルール画面をゲーム内ダイアログで開ける',rulesDialog.open);rulesDialog.close();
           cpuDifficulty='easy';state=initialState();const easyMove=chooseAiMove('white');
