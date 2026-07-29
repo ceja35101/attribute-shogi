@@ -1,5 +1,13 @@
 # 耐久テスト結果
 
+## 2026-07-29 0.1.0-rc.2（itch.io公開候補）
+
+- 初期化反復: 500回成功
+- CPU自己対戦を含む耐久シナリオ: 成功
+- ブラウザー回帰テスト: 72/72成功
+- itch.io ZIP生成・`index.html`直下検査: 成功
+- GitHub Actions: [run 30437630311](https://github.com/ceja35101/attribute-shogi/actions/runs/30437630311)
+
 ## 2026-07-28 0.1.0-rc.1（最新援軍制限・保存Version 3）
 
 GitHub ActionsのChromeで実行した。

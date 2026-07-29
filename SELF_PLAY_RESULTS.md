@@ -1,5 +1,12 @@
 # CPU自己対戦結果
 
+## 2026-07-29 0.1.0-rc.2（itch.io公開候補）
+
+- 対局数: 500
+- 最大手数: 600
+- 実行結果: エラーなし
+- GitHub Actions: [run 30437630311](https://github.com/ceja35101/attribute-shogi/actions/runs/30437630311)
+
 ## 2026-07-28 0.1.0-rc.1（最新援軍制限・保存Version 3）
 
 GitHub ActionsのChromeで、衝突開始時から援軍位置にいた駒の使用禁止とVersion 2保存移行を含む最新版を、難易度「むずかしい」500局・600手上限で実行した。
