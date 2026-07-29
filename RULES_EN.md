@@ -26,6 +26,10 @@ Both pieces enter a clash on the target square. The square is blocked. A normal 
 
 Only a piece whose element beats the clashing element can reinforce. It must have already been on the board before the clash and enter one of the marked reinforcement squares. A piece already occupying that square when the clash began cannot reinforce that clash, even if it leaves and returns; replacing it with a different eligible piece works.
 
+If an opposing strong piece of the same element blocks a reinforcement square and the intended reinforcement moves onto it, a linked clash begins. The original reinforcement does not resolve yet. Only one linked clash may be created for each original clash; both deadlines are reset once to six turns. A side that wins the linked clash with a strong reinforcement also wins the original clash. If the linked clash expires with both pieces disappearing, the original clash expires normally. Linked clashes cannot create further linked clashes.
+
+The board marks the reset original clash as `O#↻` and its linked clash as `L#→#`.
+
 ## King and Durability
 
 The King has 4 durability.

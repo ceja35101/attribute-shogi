@@ -219,6 +219,45 @@ function renderPracticeTutorial(){
   next.textContent=practiceCompleted?bilingual("完了済み","Completed"):practiceStep===PRACTICE_SCENARIOS.length-1?bilingual("完了","Complete"):bilingual("次へ","Next");
 }
 
+const positionKeyCore=positionKey;
+positionKey=function(s=state){
+  const linked=(s.clashes||[]).map(c=>`${c.id||"-"}:${c.parentClashId||"-"}:${c.linkedUsed?1:0}`).sort().join("|");
+  return `${positionKeyCore(s)}#${linked}`;
+};
+function linkedParentForMove(m){
+  if(m.kind!=="board"||m.result!=="same")return null;
+  const moving=state.board[m.fromY]?.[m.fromX],target=state.board[m.y]?.[m.x];
+  if(!moving||!target||moving.attr!==target.attr)return null;
+  return state.clashes.find(clash=>!clash.parentClashId&&!clash.linkedUsed&&ATTRIBUTE_DATA[moving.attr].beats===clash.attr&&clash.support.some(slot=>slot.x===m.x&&slot.y===m.y))||null;
+}
+function resolveLinkedParent(parent,winnerColor){
+  if(!parent||!state.clashes.includes(parent))return"";
+  const kings=parent.pieces.filter(piece=>piece.type==="king");
+  state.clashes=state.clashes.filter(clash=>clash!==parent);
+  if(kings.length===2){
+    state.winner=winnerColor;
+    return bilingual(` 連動元の王同士の膠着も${owner(winnerColor)}が制しました。${resultForViewer(winnerColor)}`,` ${owner(winnerColor)} also won the linked royal clash. ${resultForViewer(winnerColor)}`);
+  }
+  if(kings.length===1){
+    const king=kings[0],attacker=parent.pieces.find(piece=>piece.type!=="king");
+    if(winnerColor===king.color){
+      state.board[parent.y][parent.x]=king;addHand(king.color,attacker);
+      return bilingual(` 連動元の膠着も王側が制し、王を無傷で救出しました。`,` The King's side also won the original clash and rescued the King unharmed.`);
+    }
+    state.board[parent.y][parent.x]=attacker;state.winner=winnerColor;
+    return bilingual(` 連動元の王も制圧しました。${resultForViewer(winnerColor)}`,` The linked victory also defeated the King. ${resultForViewer(winnerColor)}`);
+  }
+  const winner=parent.pieces.find(piece=>piece.color===winnerColor),loser=parent.pieces.find(piece=>piece.color!==winnerColor);
+  if(winner){state.board[parent.y][parent.x]=winner;if(loser)addHand(winnerColor,loser)}
+  return bilingual(` 連動元の膠着も${owner(winnerColor)}が制しました。`,` ${owner(winnerColor)} also won the original linked clash.`);
+}
+const resolveBySupportCore=resolveBySupport;
+resolveBySupport=function(piece,x,y){
+  const linked=state.clashes.find(clash=>clash.parentClashId&&ATTRIBUTE_DATA[piece.attr].beats===clash.attr&&clash.support.some(slot=>slot.x===x&&slot.y===y));
+  const parent=linked&&state.clashes.find(clash=>clash.id===linked.parentClashId);
+  const message=resolveBySupportCore(piece,x,y);
+  return message&&parent?message+resolveLinkedParent(parent,piece.color):message;
+};
 const executeCore=execute;
 function animateMainRetaliation(m){
   if(state.autoPlay||m.kind!=="board"||m.result!=="retaliation")return null;
@@ -227,7 +266,18 @@ function animateMainRetaliation(m){
   const source=document.querySelector(`.square[data-x="${m.fromX}"][data-y="${m.fromY}"] .piece`),hand=document.getElementById(target.color===CPU?"cpu-stock":"human-stock");
   return source&&hand?flyPieceToHand(source,hand,360):null;
 }
-execute=function(m,cpu=false){const flight=animateMainRetaliation(m);return flight?flight.then(()=>executeCore(m,cpu)):executeCore(m,cpu)};
+function executeWithLinkedClash(m,cpu=false){
+  const parent=linkedParentForMove(m);
+  if(parent){parent.linkedUsed=true;parent.expiresAt=state.ply+7}
+  const result=executeCore(m,cpu);
+  if(parent){
+    const child=state.clashes.find(clash=>clash!==parent&&clash.x===m.x&&clash.y===m.y);
+    if(child){child.parentClashId=parent.id;parent.linkedChildId=child.id;child.expiresAt=parent.expiresAt}
+    if(!state.autoPlay)render();
+  }
+  return result;
+}
+execute=function(m,cpu=false){const flight=animateMainRetaliation(m);return flight?flight.then(()=>executeWithLinkedClash(m,cpu)):executeWithLinkedClash(m,cpu)};
 
 function saveGame(){
   if(!state||state.autoPlay||replayIndex!==null)return false;
@@ -438,12 +488,16 @@ function renderBoard(){
     if(m)b.classList.add(m.result==="capture"?"capture-target":m.result==="retaliation"?"retaliation-target":m.result==="same"?"same-target":m.result==="support"?"support-target":"move-target");
     if(clash){
       const remaining=clash.expiresAt-shown.ply;
+      const clashNumber=shown.clashes.indexOf(clash)+1,parentNumber=clash.parentClashId?shown.clashes.findIndex(item=>item.id===clash.parentClashId)+1:0;
+      const clashLabel=clash.parentClashId?bilingual(`連${clashNumber}→${parentNumber}`,`L${clashNumber}→${parentNumber}`):clash.linkedUsed?bilingual(`元${clashNumber}↻`,`O${clashNumber}↻`):`${bilingual("衝","C")}${clashNumber}`;
       b.classList.add("clash-square");
+      if(clash.parentClashId)b.classList.add("linked-clash");
+      if(clash.linkedUsed)b.classList.add("linked-parent-clash");
       if(clash.kingCollision)b.classList.add("king-clash");
       if(clash.weakCollision)b.classList.add("weak-king-clash");
       b.disabled=true;
-      b.title=uiLanguage==="en"?`${clash.weakCollision?"Short weak-element King clash":`${clash.kingCollision?"King ":""}${attrLabel(clash.attr)} clash`} · ${remaining} turns left`:`${clash.weakCollision?"王への弱属性短期膠着":`${clash.kingCollision?"王の":""}${attrLabel(clash.attr)}属性衝突`}・残り${remaining}ターン`;
-      b.innerHTML=`<span class="clash-id">${bilingual("衝","C")}${shown.clashes.indexOf(clash)+1}</span><span class="clash-icon">${attributeIcon(clash.attr)}</span><span class="clash-pieces">${clash.pieces.map(q=>symbol(q)).join("×")}</span><span class="clash-turns">${remaining}</span>`;
+      b.title=uiLanguage==="en"?`${clash.parentClashId?"Linked ":clash.linkedUsed?"Original reset ":""}${clash.weakCollision?"short weak-element King clash":`${clash.kingCollision?"King ":""}${attrLabel(clash.attr)} clash`} · ${remaining} turns left`:`${clash.parentClashId?"連動":clash.linkedUsed?"元・期限更新済み":""}${clash.weakCollision?"王への弱属性短期膠着":`${clash.kingCollision?"王の":""}${attrLabel(clash.attr)}属性衝突`}・残り${remaining}ターン`;
+      b.innerHTML=`<span class="clash-id">${clashLabel}</span><span class="clash-icon">${attributeIcon(clash.attr)}</span><span class="clash-pieces">${clash.pieces.map(q=>symbol(q)).join("×")}</span><span class="clash-turns">${remaining}</span>`;
     }else if(p){
       const lockText=lockedClashes.length?` / 衝突${lockedClashes.map(c=>shown.clashes.indexOf(c)+1).join("・")}への援軍権使用済み`:"";
       b.title=`${symbol(p)} / ${attrLabel(p.attr)}${uiLanguage==="ja"?"属性":""}${p.type==="king"?` / ${bilingual("耐久","Durability")} ${4-(p.weakHits||0)}/4`:""}${lockText}`;

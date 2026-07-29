@@ -422,6 +422,8 @@ button.danger:hover { background: #991b1b; }
   outline: 3px solid #f59e0b;
   background: #475569;
 }
+.clash-square.linked-parent-clash { box-shadow: inset 0 0 0 4px rgba(251,191,36,.78); }
+.clash-square.linked-clash { box-shadow: inset 0 0 0 4px rgba(56,189,248,.82); }
 .practice-sidebar { display: grid; gap: 10px; min-width: 0; }
 .practice-hand-panel {
   min-height: 92px;

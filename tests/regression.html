@@ -79,6 +79,17 @@
           check('既存援軍は使用不可だが別駒への入替は有効',weakBlocked&&lockedCount===2&&lockedAfterReentry&&supportStateVisible&&replacementMessage?.includes('援軍'));
           state=initialState();state.autoPlay=true;state.board=Array.from({length:9},()=>Array(9).fill(null));state.clashes=[];state.ply=0;state.turn='white';const collisionAttacker=piece('bishop','white'),collisionKing=piece('king','black'),existingHelper=piece('knight','white');collisionAttacker.attr=collisionKing.attr='water';existingHelper.attr='wind';state.board[5][4]=collisionAttacker;state.board[4][4]=collisionKing;state.board[3][4]=existingHelper;execute({kind:'board',fromX:4,fromY:5,x:4,y:4,result:'same'},true);const createdClash=state.clashes[0],existingCannotReturn=createdClash&&resolveBySupport(existingHelper,4,3)===null,replacementHelper=piece('gold','white');replacementHelper.attr='wind';state.board[3][4]=replacementHelper;const replacementWin=createdClash&&resolveBySupport(replacementHelper,4,3);
           check('王との衝突生成時に既存援軍は即勝利せず別駒で成立',Boolean(createdClash)&&existingHelper.supportLocks?.includes(createdClash.id)&&existingCannotReturn&&replacementWin?.includes('勝利しました'));
+          state=initialState();state.autoPlay=true;state.board=Array.from({length:9},()=>Array(9).fill(null));state.ply=0;state.turn='white';
+          const linkedKingW=piece('king','white'),linkedKingB=piece('king','black');linkedKingW.attr=linkedKingB.attr='wind';state.board[8][0]=linkedKingW;state.board[0][8]=linkedKingB;
+          const parentWhite=piece('silver','white'),parentBlack=piece('gold','black');parentWhite.attr=parentBlack.attr='fire';
+          const parentClash={id:'parent-link',x:4,y:4,attr:'fire',pieces:[parentWhite,parentBlack],attackerColor:'white',support:[{x:4,y:3},{x:4,y:5}],startedAt:0,expiresAt:4};
+          const linkingRook=piece('rook','white'),blockingGold=piece('gold','black');linkingRook.attr=blockingGold.attr='water';linkingRook.boardSince=0;blockingGold.boardSince=0;state.board[3][2]=linkingRook;state.board[3][4]=blockingGold;state.clashes=[parentClash];
+          execute({kind:'board',fromX:2,fromY:3,x:4,y:3,result:'same'},true);
+          const linkedChild=state.clashes.find(clash=>clash.parentClashId==='parent-link'),linkedReset=parentClash.linkedUsed&&parentClash.expiresAt===7&&linkedChild?.expiresAt===7&&state.ply===1;
+          renderBoard();const linkedLabels=[...document.querySelectorAll('.clash-id')].map(node=>node.textContent);
+          check('援軍位置の同属性衝突は一度だけ連動し元期限を6ターンへリセット',linkedReset&&linkedParentForMove({kind:'board',result:'same',fromX:2,fromY:3,x:4,y:5})===null&&linkedLabels.some(label=>label.includes('元'))&&linkedLabels.some(label=>label.includes('連')));
+          const linkedAid=piece('bishop','white');linkedAid.attr='wind';linkedAid.boardSince=0;state.board[2][4]=linkedAid;const linkedVictory=resolveBySupport(linkedAid,4,2);
+          check('連動膠着の勝者が元の膠着も制する',linkedVictory?.includes('連動元')&&state.clashes.length===0&&state.board[4][4]?.color==='white'&&state.hand.white.length===2);
           const handIcon=handPieceHtml(boardSupport,'white');
           check('持ち駒アイコンに駒種と属性を表示',handIcon.includes('hand-piece-symbol')&&handIcon.includes('金')&&handIcon.includes('attr-fire'));
           state=initialState();state.board=Array.from({length:9},()=>Array(9).fill(null));state.clashes=[];
