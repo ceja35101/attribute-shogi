@@ -187,7 +187,7 @@
           const sameKingExplained=practiceResolved&&document.getElementById('practice-king-life').textContent.includes('2')&&document.getElementById('practice-result').textContent.includes('耐久を2');
           check('6局面の操作型属性チュートリアルを実装',firstPracticePassed&&practiceRules&&PRACTICE_SCENARIOS.length===6&&tutorialOrder&&capturedAnimation&&supportMarkers&&supportCompleted&&weakKingExplained&&kingOptions&&sameKingExplained);
           const languageSelect=document.getElementById('language-select');state.message='あなたの番です。駒または持ち駒を選んでください。';uiLanguage='en';applyLanguage();render();
-          const englishShown=document.documentElement.lang==='en'&&document.querySelector('.beta-label').textContent==='Free Beta'&&document.querySelector('.piece-symbol')?.textContent.match(/^[KRBGSNLP+]+$/)&&state.message==='Your turn. Select a piece or a piece in hand.'&&[...document.getElementById('cpu-difficulty').options].map(option=>option.textContent).join('/')==='Easy/Normal/Hard';
+          const englishShown=document.documentElement.lang==='en'&&document.querySelector('.beta-label').textContent==='Free Beta'&&document.querySelector('.piece-symbol')?.textContent.match(/^[KRBGSNLP+]+$/)&&state.message==='Your turn. Select a piece or a piece in hand.'&&document.getElementById('close-rules')?.textContent==='Close'&&document.getElementById('close-rules')?.getAttribute('aria-label')==='Close tutorial'&&[...document.getElementById('cpu-difficulty').options].map(option=>option.textContent).join('/')==='Easy/Normal/Hard';
           languageSelect.value='ja';languageSelect.dispatchEvent(new Event('change'));
           check('日本語・英語表示と国際駒表記を切替',englishShown&&document.documentElement.lang==='ja'&&document.querySelector('.beta-label').textContent==='無料ベータ'&&[...document.getElementById('cpu-difficulty').options].map(option=>option.textContent).join('/')==='やさしい/ふつう/むずかしい');
           const rulesDialog=document.getElementById('rules-dialog');if(rulesDialog.open)rulesDialog.close();rulesDialog.showModal();
@@ -204,7 +204,8 @@
           state.moves=[{x:4,y:4,result:'retaliation'}];renderBoard();
           check('戦闘候補を文字でも表示',document.querySelector('.move-result-badge')?.textContent==='不利');
           check('再対局ボタンを用意',Boolean(document.getElementById('new-game')));
-          check('保存・棋譜出力・投了操作を用意',['save-game','export-record','resign'].every(id=>document.getElementById(id)));
+          document.getElementById('save-game').click();const saveFeedback=document.getElementById('save-status');
+          check('保存完了を設定画面内に表示',['save-game','export-record','resign'].every(id=>document.getElementById(id))&&!saveFeedback.hidden&&saveFeedback.textContent.includes('保存しました')&&document.getElementById('save-game').textContent.includes('保存しました'));
           check('不具合報告用の診断情報コピーを用意',Boolean(document.getElementById('copy-diagnostics')));
           state=initialState();document.getElementById('resign').click();document.getElementById('resign-yes').click();
           check('投了でCPU勝利として終局',state.winner==='black'&&state.message.includes('投了'));

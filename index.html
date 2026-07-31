@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#111827" />
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
     <title>属性付き将棋</title>
-    <link rel="stylesheet" href="styles.css?v=69" />
+    <link rel="stylesheet" href="styles.css?v=70" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="app-icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon-192.png" />
@@ -101,6 +101,7 @@
             <button id="export-record" type="button" class="secondary">棋譜を出力</button>
             <button id="copy-diagnostics" type="button" class="secondary">診断情報をコピー</button>
           </div>
+          <p id="save-status" class="save-status" role="status" aria-live="polite" aria-atomic="true" hidden></p>
         </section>
         <section class="menu-section beta-feedback" aria-labelledby="feedback-title">
           <h3 id="feedback-title">ベータテスト</h3>
@@ -119,7 +120,7 @@
       <form method="dialog">
         <div class="rules-dialog-header">
           <h2 id="rules-title">属性将棋の遊び方</h2>
-          <button value="close" class="secondary" aria-label="閉じる">閉じる</button>
+          <button id="close-rules" value="close" class="secondary" aria-label="閉じる">閉じる</button>
         </div>
         <button value="start" class="tutorial-start tutorial-start-top">対局を始める</button>
         <section class="practice-tutorial" aria-labelledby="practice-title">
@@ -199,6 +200,6 @@
 
     <footer class="app-footer">属性将棋 Ver0.1.0-rc.2</footer>
     <script src="game-core.js?v=16"></script>
-    <script src="app.js?v=51"></script>
+    <script src="app.js?v=53"></script>
   </body>
 </html>

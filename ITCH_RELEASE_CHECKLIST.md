@@ -37,7 +37,7 @@ dist/attribute-shogi-0.1.0-rc.2-itch.zip
 5. Release statusを`In development`、Pricingを`No payments`にする。
 6. ZIPをアップロードし、`This file will be played in the browser`を有効にする。
 7. Embed optionsは`Embed in page`、Viewportは`1280 × 900`、`Mobile friendly`を有効にする。
-8. Cover imageへ`itch-cover-630x500-v1.jpg`を設定する。
+8. Cover imageへ`itch-cover-630x500-v2.jpg`を設定する。
 9. 日本語本文は`ITCH_PAGE.md`、英語本文は`ITCH_PAGE_EN.md`を基に記載する。
 10. Draft状態でPCとiPhoneから起動・新規対局・保存復元・チュートリアルを確認する。
 11. 問題がなければVisibilityを`Public`へ変更する。

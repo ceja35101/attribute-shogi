@@ -269,6 +269,27 @@ button.danger:hover { background: #991b1b; }
 .menu-section .game-settings,
 .menu-section .game-actions { margin: 0; }
 
+.save-status {
+  margin: 10px 0 0;
+  padding: 9px 11px;
+  border: 1px solid #64748b;
+  border-radius: 8px;
+  background: #172033;
+  color: #e2e8f0;
+  font-size: .82rem;
+  line-height: 1.45;
+}
+
+.save-status.success {
+  border-color: #4ade80;
+  background: #123323;
+}
+
+.save-status.error {
+  border-color: #f87171;
+  background: #3b1919;
+}
+
 .beta-feedback p {
   margin: 0 0 10px;
   color: #cbd5e1;

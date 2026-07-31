@@ -1,5 +1,5 @@
 const APP_VERSION="0.1.0-rc.2",SAVE_KEY="attributeShogiSavedGame",SAVE_VERSION=3,INVALID_SAVE_KEY=`${SAVE_KEY}InvalidBackup`;
-let replayIndex=null,lastSoundSnapshot=-1,audioContext=null,saveNotice="";
+let replayIndex=null,lastSoundSnapshot=-1,audioContext=null,saveNotice="",saveFeedbackTimer=null;
 let soundEnabled=localStorage.getItem("attributeShogiSound")!=="off";
 let soundVolume=Number(localStorage.getItem("attributeShogiVolume")??.7);
 cpuDifficulty=localStorage.getItem("attributeShogiDifficulty")||"normal";
@@ -23,7 +23,7 @@ const bilingual=(ja,en)=>uiLanguage==="en"?en:ja;
 
 const STATIC_TRANSLATIONS={
   "#reset":["初期化","Reset"],"#resign":["投了","Resign"],"#new-game":["もう一度対局する","Play again"],
-  "#menu-title":["ルール・設定","Rules & Settings"],"#close-menu":["閉じる","Close"],
+  "#menu-title":["ルール・設定","Rules & Settings"],"#close-menu":["閉じる","Close"],"#close-rules":["閉じる","Close"],
   "#rule-summary-title":["ルール概要","Rule Summary"],"#open-rules":["詳しい遊び方・ルール","How to Play"],
   "#settings-title":["設定","Settings"],"#tools-title":["その他の操作","Other Actions"],
   "#undo-turn":["待った","Undo"],"#save-game":["対局を保存","Save Game"],"#export-record":["棋譜を出力","Export Record"],
@@ -43,6 +43,8 @@ function applyLanguage(){
   if(title?.firstChild)title.firstChild.nodeValue=bilingual("属性付き将棋 ","Elemental Shogi ");
   document.querySelector(".beta-label").textContent=bilingual("無料ベータ","Free Beta");
   document.getElementById("open-menu").setAttribute("aria-label",bilingual("ルールと設定を開く","Open rules and settings"));
+  document.getElementById("close-menu").setAttribute("aria-label",bilingual("メニューを閉じる","Close menu"));
+  document.getElementById("close-rules").setAttribute("aria-label",bilingual("遊び方を閉じる","Close tutorial"));
   for(const [selector,texts] of Object.entries(STATIC_TRANSLATIONS)){
     const element=document.querySelector(selector);
     if(element)element.textContent=texts[uiLanguage==="en"?1:0];
@@ -730,7 +732,18 @@ function bind(){
   updateSoundButton();
   document.getElementById("new-game").addEventListener("click",()=>document.getElementById("reset").click());
   document.getElementById("save-game").addEventListener("click",()=>{
-    const ok=saveGame();state.message=ok?bilingual("現在の対局をこのブラウザーへ保存しました。","Game saved in this browser."):bilingual("保存できませんでした。ブラウザーの保存設定を確認してください。","Could not save. Check your browser storage settings.");state.tone=ok?"success":"error";render();
+    const ok=saveGame();
+    const text=ok?bilingual("保存しました。このブラウザーで次回起動時に自動復元されます。","Game saved. It will be restored automatically next time in this browser."):bilingual("保存できませんでした。ブラウザーの保存設定を確認してください。","Could not save. Check your browser storage settings.");
+    const status=document.getElementById("save-status"),button=document.getElementById("save-game");
+    state.message=text;state.tone=ok?"success":"error";
+    status.textContent=text;status.className=`save-status ${ok?"success":"error"}`;status.hidden=false;
+    button.textContent=ok?bilingual("✓ 保存しました","✓ Saved"):bilingual("保存失敗","Save failed");
+    clearTimeout(saveFeedbackTimer);
+    saveFeedbackTimer=setTimeout(()=>{
+      status.hidden=true;
+      button.textContent=bilingual("対局を保存","Save Game");
+    },3000);
+    render();
   });
   document.getElementById("export-record").addEventListener("click",exportRecord);
   document.getElementById("copy-diagnostics").addEventListener("click",copyDiagnostics);
