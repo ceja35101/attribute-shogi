@@ -13,9 +13,9 @@ itch.io: [https://ceja35101.itch.io/attribute-shogi](https://ceja35101.itch.io/a
 5. Edge、Chrome、Firefox、Safariで手動スモークテストを行う。
 6. Service Workerのキャッシュ名を更新する。
 
-## 静的ホスティング
+## 静的ホスティングとオンライン対戦
 
-本作はサーバー処理を必要としないため、リポジトリの内容をHTTPS対応の静的ホスティングへ配置します。GitHub Pagesを利用する場合は、リポジトリ設定の Pages で公開元を `main` ブランチのルートに指定します。
+ゲーム本体はHTTPS対応の静的ホスティングへ配置します。GitHub Pagesを利用する場合は、リポジトリ設定の Pages で公開元を `main` ブランチのルートに指定します。招待制オンライン対戦だけはSupabaseを利用します。設定とSQL適用方法は [ONLINE_SETUP.md](ONLINE_SETUP.md) を参照してください。
 
 ## ロールバック
 

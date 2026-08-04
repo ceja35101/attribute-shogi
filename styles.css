@@ -1430,6 +1430,21 @@ button.secondary { background: #263449; border: 1px solid rgba(255,255,255,.09);
 
 .captured-mirror { display: none; }
 
+.online-panel {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid rgba(96, 165, 250, .35);
+  border-radius: 10px;
+  background: rgba(30, 64, 175, .12);
+}
+.online-panel p { margin: 0 0 10px; }
+.online-actions { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; }
+.online-actions label { display: grid; gap: 4px; font-size: .82rem; }
+#room-code { width: 9em; text-transform: uppercase; letter-spacing: .14em; font-weight: 800; }
+.online-status { margin-top: 10px !important; color: #bfdbfe; font-weight: 700; }
+.online-status.error { color: #fca5a5; }
+.online-status.success { color: #86efac; }
+
 @media (max-width: 900px) {
   .app-shell {
     grid-template-columns: 1fr;

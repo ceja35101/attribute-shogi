@@ -18,7 +18,7 @@ PACKAGE_FILES = {
     "icon-512.png", "fire-realistic-v1.png", "water-realistic-v1.png",
     "wind-realistic-v1.png", "RULES.md", "RULES_EN.md", "PRIVACY.md",
     "PRIVACY_EN.md", "LICENSE", "LICENSES.md", "BETA_TEST_GUIDE.md",
-    "BETA_TEST_GUIDE_EN.md",
+    "BETA_TEST_GUIDE_EN.md", "supabase-config.js", "online-client.js",
 }
 
 

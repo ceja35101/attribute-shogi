@@ -1,5 +1,6 @@
-const APP_VERSION="0.1.0-rc.2",SAVE_KEY="attributeShogiSavedGame",SAVE_VERSION=3,INVALID_SAVE_KEY=`${SAVE_KEY}InvalidBackup`;
+const APP_VERSION="0.1.0-rc.2",SAVE_KEY="attributeShogiSavedGame",SAVE_VERSION=3,INVALID_SAVE_KEY=`${SAVE_KEY}InvalidBackup`,ONLINE_SESSION_KEY="attributeShogiOnlineSession";
 let replayIndex=null,lastSoundSnapshot=-1,audioContext=null,saveNotice="",saveFeedbackTimer=null;
+let onlineSession=null,onlineUnsubscribe=null,onlinePollTimer=null,onlinePublishing=false;
 let soundEnabled=localStorage.getItem("attributeShogiSound")!=="off";
 let soundVolume=Number(localStorage.getItem("attributeShogiVolume")??.7);
 cpuDifficulty=localStorage.getItem("attributeShogiDifficulty")||"normal";
@@ -21,9 +22,10 @@ promotionPrompt=p=>new Promise(resolve=>{
 const shownState=()=>replayIndex===null?state:state.snapshots[replayIndex]?.position||state;
 const bilingual=(ja,en)=>uiLanguage==="en"?en:ja;
 const isLocalGame=()=>gameMode==="local";
-const isPlayerControlled=color=>color===HUMAN||isLocalGame();
-const actorLabel=color=>isLocalGame()?(color===HUMAN?bilingual("先手","Sente"):bilingual("後手","Gote")):color===HUMAN?bilingual("先手","You"):bilingual("後手","CPU");
-const turnPrompt=color=>isLocalGame()?bilingual(`${color===HUMAN?"先手":"後手"}の番です。駒または持ち駒を選んでください。`,`${color===HUMAN?"Sente":"Gote"}'s turn. Select a piece or a piece in hand.`):bilingual("あなたの番です。駒または持ち駒を選んでください。","Your turn. Select a piece or a piece in hand.");
+const isOnlineGame=()=>gameMode==="online";
+const isPlayerControlled=color=>isOnlineGame()?Boolean(onlineSession?.connected&&viewerColor===color):color===HUMAN||isLocalGame();
+const actorLabel=color=>isLocalGame()||isOnlineGame()?(color===HUMAN?bilingual("先手","Sente"):bilingual("後手","Gote")):color===HUMAN?bilingual("先手","You"):bilingual("後手","CPU");
+const turnPrompt=color=>isLocalGame()?bilingual(`${color===HUMAN?"先手":"後手"}の番です。駒または持ち駒を選んでください。`,`${color===HUMAN?"Sente":"Gote"}'s turn. Select a piece or a piece in hand.`):isOnlineGame()?(color===viewerColor?bilingual("あなたの番です。駒または持ち駒を選んでください。","Your turn. Select a piece or a piece in hand."):bilingual("相手の着手を待っています。","Waiting for the opponent.")):bilingual("あなたの番です。駒または持ち駒を選んでください。","Your turn. Select a piece or a piece in hand.");
 
 const STATIC_TRANSLATIONS={
   "#reset":["初期化","Reset"],"#resign":["投了","Resign"],"#new-game":["もう一度対局する","Play again"],
@@ -41,6 +43,139 @@ const STATIC_TRANSLATIONS={
   "#replay-prev":["◀ 前の手","◀ Previous"],"#replay-next":["次の手 ▶","Next ▶"],"#replay-current":["現在局面へ戻る","Return to current"]
 };
 
+function onlineErrorText(error){
+  const message=String(error?.message||error||"");
+  if(message.includes("SUPABASE_NOT_CONFIGURED"))return bilingual("Supabase接続情報が未設定です。supabase-config.jsを設定してください。","Supabase is not configured. Complete supabase-config.js.");
+  if(message.includes("room unavailable"))return bilingual("部屋が見つからない、満員、または期限切れです。","The room was not found, is full, or has expired.");
+  if(message.includes("stale revision"))return bilingual("相手の着手を先に受信しました。最新局面を再取得します。","The opponent moved first. Reloading the latest position.");
+  if(message.includes("not your turn"))return bilingual("現在はあなたの手番ではありません。","It is not your turn.");
+  return bilingual(`オンライン接続エラー: ${message}`,`Online error: ${message}`);
+}
+
+function setOnlineStatus(text,tone="info"){
+  const element=document.getElementById("online-status");
+  if(!element)return;
+  element.textContent=text;
+  element.className=`online-status ${tone}`;
+}
+
+function generateRoomCode(){
+  const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",bytes=new Uint8Array(6);
+  crypto.getRandomValues(bytes);
+  return [...bytes].map(value=>alphabet[value%alphabet.length]).join("");
+}
+
+function onlineStatePayload(){
+  const {selected,moves,aiThinking,autoPlay,snapshots,...payload}=state;
+  return JSON.parse(JSON.stringify({...payload,gameMode:"online"}));
+}
+
+function applyOnlineRoom(room,{initial=false}={}){
+  if(!room?.state||!onlineSession)return;
+  if(!initial&&Number(room.revision)<=onlineSession.revision){
+    const wasConnected=onlineSession.connected;
+    onlineSession.connected=room.status==="playing"||room.status==="finished";
+    if(onlineSession.connected&&!wasConnected){state.message=turnPrompt(state.turn);state.tone="success";render()}
+    setOnlineStatus(onlineSession.connected?bilingual(`接続中: 部屋 ${room.code}（先手）`,`Connected: room ${room.code} (Sente)`):bilingual(`部屋 ${room.code}: 相手の参加を待っています。`,`Room ${room.code}: waiting for an opponent.`),onlineSession.connected?"success":"info");
+    return;
+  }
+  const previousSnapshots=initial?[]:(state.snapshots||[]);
+  onlineSession.revision=Number(room.revision||0);
+  onlineSession.connected=room.status==="playing"||room.status==="finished";
+  const incoming=JSON.parse(JSON.stringify(room.state));
+  state={...incoming,gameMode:"online",selected:null,moves:[],aiThinking:false,autoPlay:false,snapshots:previousSnapshots};
+  if(!Array.isArray(state.log))state.log=[];
+  if(!Array.isArray(state.fullLog))state.fullLog=[];
+  if(!Array.isArray(state.history))state.history=[];
+  if(state.winner)state.message=resultForViewer(state.winner);
+  else if(state.turn===viewerColor)state.message=turnPrompt(state.turn);
+  replayIndex=null;
+  render();
+  setOnlineStatus(room.status==="waiting"?bilingual(`部屋 ${room.code}: 相手の参加を待っています。`,`Room ${room.code}: waiting for an opponent.`):bilingual(`接続中: 部屋 ${room.code}（${viewerColor===HUMAN?"先手":"後手"}）`,`Connected: room ${room.code} (${viewerColor===HUMAN?"Sente":"Gote"})`),room.status==="waiting"?"info":"success");
+}
+
+async function watchOnlineRoom(room){
+  if(onlineUnsubscribe)await onlineUnsubscribe();
+  if(onlinePollTimer)clearInterval(onlinePollTimer);
+  onlineUnsubscribe=await window.AttributeShogiOnline.subscribe(room.id,updated=>applyOnlineRoom(updated),status=>{
+    if(status==="CHANNEL_ERROR"||status==="TIMED_OUT")setOnlineStatus(bilingual("接続が不安定です。再接続を試みています。","Connection interrupted. Reconnecting…"),"error");
+  });
+  onlinePollTimer=setInterval(async()=>{
+    if(!onlineSession||onlinePublishing)return;
+    try{applyOnlineRoom(await window.AttributeShogiOnline.getRoom(room.id))}catch(_error){}
+  },3000);
+}
+
+async function createOnlineRoom(){
+  const api=window.AttributeShogiOnline;
+  if(!api?.configured){setOnlineStatus(onlineErrorText("SUPABASE_NOT_CONFIGURED"),"error");return}
+  const button=document.getElementById("create-online-room");button.disabled=true;
+  try{
+    gameMode="online";viewerColor=HUMAN;localStorage.setItem("attributeShogiGameMode",gameMode);
+    state=initialState();state.gameMode="online";
+    let room=null;
+    for(let attempt=0;attempt<4&&!room;attempt++){
+      const code=generateRoomCode();
+      try{room=await api.createRoom(code,onlineStatePayload())}catch(error){if(!String(error.message).includes("duplicate"))throw error}
+    }
+    if(!room)throw Error("Could not allocate a room code");
+    onlineSession={roomId:room.id,code:room.code,revision:Number(room.revision||0),connected:false,role:"host"};
+    localStorage.setItem(ONLINE_SESSION_KEY,JSON.stringify({roomId:room.id,code:room.code,role:"host"}));
+    document.getElementById("room-code").value=room.code;
+    document.getElementById("copy-room-code").hidden=false;
+    await watchOnlineRoom(room);applyOnlineRoom(room,{initial:true});applyLanguage();
+  }catch(error){setOnlineStatus(onlineErrorText(error),"error")}finally{button.disabled=false}
+}
+
+async function joinOnlineRoom(){
+  const api=window.AttributeShogiOnline,code=document.getElementById("room-code").value.trim().toUpperCase();
+  if(!/^[A-Z2-9]{6}$/.test(code)){setOnlineStatus(bilingual("6文字の招待コードを入力してください。","Enter the 6-character invite code."),"error");return}
+  const button=document.getElementById("join-online-room");button.disabled=true;
+  try{
+    const room=await api.joinRoom(code);
+    gameMode="online";viewerColor=CPU;localStorage.setItem("attributeShogiGameMode",gameMode);
+    onlineSession={roomId:room.id,code:room.code,revision:Number(room.revision||0),connected:true,role:"guest"};
+    localStorage.setItem(ONLINE_SESSION_KEY,JSON.stringify({roomId:room.id,code:room.code,role:"guest"}));
+    document.getElementById("copy-room-code").hidden=false;
+    await watchOnlineRoom(room);applyOnlineRoom(room,{initial:true});applyLanguage();
+  }catch(error){setOnlineStatus(onlineErrorText(error),"error")}finally{button.disabled=false}
+}
+
+async function publishOnlineState(){
+  if(!isOnlineGame()||!onlineSession?.connected||onlinePublishing)return;
+  onlinePublishing=true;
+  try{
+    const room=await window.AttributeShogiOnline.submitState(onlineSession.roomId,onlineSession.revision,onlineStatePayload());
+    onlineSession.revision=Number(room.revision);
+    setOnlineStatus(bilingual(`着手を同期しました: 部屋 ${room.code}`,`Move synced: room ${room.code}`),"success");
+  }catch(error){
+    setOnlineStatus(onlineErrorText(error),"error");
+    try{applyOnlineRoom(await window.AttributeShogiOnline.getRoom(onlineSession.roomId))}catch(_error){}
+  }finally{onlinePublishing=false}
+}
+
+stateMutationHook=publishOnlineState;
+
+async function restoreOnlineSession(){
+  if(gameMode!=="online"||!window.AttributeShogiOnline?.configured)return false;
+  try{
+    const saved=JSON.parse(localStorage.getItem(ONLINE_SESSION_KEY)||"null");
+    if(!saved?.roomId)return false;
+    const room=await window.AttributeShogiOnline.getRoom(saved.roomId);
+    viewerColor=saved.role==="guest"?CPU:HUMAN;
+    onlineSession={...saved,revision:Number(room.revision||0),connected:room.status==="playing"||room.status==="finished"};
+    document.getElementById("room-code").value=room.code;
+    document.getElementById("copy-room-code").hidden=false;
+    await watchOnlineRoom(room);
+    applyOnlineRoom(room,{initial:true});
+    return true;
+  }catch(error){
+    localStorage.removeItem(ONLINE_SESSION_KEY);
+    setOnlineStatus(onlineErrorText(error),"error");
+    return false;
+  }
+}
+
 function applyLanguage(){
   document.documentElement.lang=uiLanguage;
   document.title=bilingual("属性付き将棋","Elemental Shogi");
@@ -55,12 +190,12 @@ function applyLanguage(){
     if(element)element.textContent=texts[uiLanguage==="en"?1:0];
   }
   const handTitles=document.querySelectorAll(".hand-panel h2");
-  if(handTitles[0])handTitles[0].textContent=isLocalGame()?bilingual("後手の持ち駒","Gote Pieces in Hand"):bilingual("後手の持ち駒","CPU Pieces in Hand");
-  if(handTitles[1])handTitles[1].textContent=isLocalGame()?bilingual("先手の持ち駒","Sente Pieces in Hand"):bilingual("先手の持ち駒","Your Pieces in Hand");
+  if(handTitles[0])handTitles[0].textContent=isLocalGame()||isOnlineGame()?bilingual("後手の持ち駒","Gote Pieces in Hand"):bilingual("後手の持ち駒","CPU Pieces in Hand");
+  if(handTitles[1])handTitles[1].textContent=isLocalGame()||isOnlineGame()?bilingual("先手の持ち駒","Sente Pieces in Hand"):bilingual("先手の持ち駒","Your Pieces in Hand");
   const logTitle=document.querySelector(".log-panel h2");
   if(logTitle)logTitle.textContent=bilingual("直近5手","Last 5 Moves");
   const feedback=document.querySelector(".beta-feedback > p");
-  if(feedback)feedback.textContent=bilingual("遊びにくかった点、不具合、面白かった局面をお知らせください。対局内容は自動送信されません。","Tell us what was confusing, any bugs, and memorable positions. Game data is never sent automatically.");
+  if(feedback)feedback.textContent=bilingual("遊びにくかった点、不具合、面白かった局面をお知らせください。オンライン対戦の同期以外で対局内容を自動送信しません。","Tell us what was confusing, any bugs, and memorable positions. Game data is sent only to synchronize online matches.");
   const feedbackLinks=document.querySelectorAll(".beta-feedback .button-link");
   if(feedbackLinks[0])feedbackLinks[0].textContent=bilingual("不具合・感想を送る","Send Bug Report / Feedback");
   if(feedbackLinks[1]){feedbackLinks[1].textContent=bilingual("テスト参加案内","Beta Test Guide");feedbackLinks[1].href=bilingual("BETA_TEST_GUIDE.md","BETA_TEST_GUIDE_EN.md")}
@@ -96,7 +231,7 @@ function applyLanguage(){
   document.getElementById("practice-cpu-hand-label").textContent=bilingual("CPUの持ち駒","CPU Pieces in Hand");
   document.getElementById("practice-human-hand-label").textContent=bilingual("自分の持ち駒","Your Pieces in Hand");
   document.querySelector("#promotion-dialog p").textContent=bilingual("成ると駒の動きが変わります。属性は変化しません。","Promotion changes movement. The element does not change.");
-  document.querySelector("#resign-dialog p").textContent=isLocalGame()?bilingual("手番側が投了すると、相手側の勝利となります。","If the player to move resigns, the other player wins."):bilingual("投了するとCPUの勝利となり、対局は終了します。","Resigning ends the game with a CPU victory.");
+  document.querySelector("#resign-dialog p").textContent=isLocalGame()||isOnlineGame()?bilingual("手番側が投了すると、相手側の勝利となります。","If the player to move resigns, the other player wins."):bilingual("投了するとCPUの勝利となり、対局は終了します。","Resigning ends the game with a CPU victory.");
   document.querySelector(".app-footer").textContent=bilingual(`属性将棋 Ver${APP_VERSION}`,`Elemental Shogi Ver${APP_VERSION}`);
   document.getElementById("language-select").value=uiLanguage;
   const difficultyOptions=document.getElementById("cpu-difficulty")?.options;
@@ -105,9 +240,15 @@ function applyLanguage(){
     [...difficultyOptions].forEach((option,index)=>option.textContent=difficultyLabels[index]);
   }
   const modeOptions=document.getElementById("game-mode")?.options;
-  if(modeOptions){modeOptions[0].textContent=bilingual("CPU対戦","Vs CPU");modeOptions[1].textContent=bilingual("同じ端末で2人対戦","Two Players (Same Device)")}
-  document.getElementById("cpu-difficulty").disabled=isLocalGame();
+  if(modeOptions){modeOptions[0].textContent=bilingual("CPU対戦","Vs CPU");modeOptions[1].textContent=bilingual("同じ端末で2人対戦","Two Players (Same Device)");modeOptions[2].textContent=bilingual("招待コードでオンライン対戦","Online (Invite Code)")}
+  document.getElementById("cpu-difficulty").disabled=gameMode!=="cpu";
   document.getElementById("game-mode").value=gameMode;
+  document.getElementById("online-panel").hidden=!isOnlineGame();
+  document.getElementById("online-description").textContent=bilingual("部屋を作成して6文字の招待コードを相手へ伝えるか、受け取ったコードで参加します。","Create a room and share its 6-character code, or join with a code you received.");
+  document.getElementById("room-code-label").textContent=bilingual("招待コード","Invite code");
+  document.getElementById("create-online-room").textContent=bilingual("部屋を作成","Create Room");
+  document.getElementById("join-online-room").textContent=bilingual("部屋に参加","Join Room");
+  document.getElementById("copy-room-code").textContent=bilingual("コードをコピー","Copy Code");
   const idlePrompts=["あなたの番です。駒または持ち駒を選んでください。","Your turn. Select a piece or a piece in hand.","先手の番です。駒または持ち駒を選んでください。","後手の番です。駒または持ち駒を選んでください。","Sente's turn. Select a piece or a piece in hand.","Gote's turn. Select a piece or a piece in hand."];
   if(state&&idlePrompts.includes(state.message))state.message=turnPrompt(state.turn);
   renderPracticeTutorial();
@@ -333,7 +474,7 @@ function restoreGame(){
     if(!s.hand||!Array.isArray(s.clashes)||!pieces.every(p=>PIECES[p.type]&&ATTRIBUTE_DATA[p.attr]))return reject("駒または衝突データ破損");
     const migrated=migrateSavedPosition(s),snapshots=Array.isArray(migrated.snapshots)?migrated.snapshots:[];
     for(const snapshot of snapshots)migrateSavedPosition(snapshot?.position);
-    return{...migrated,gameMode:migrated.gameMode==="local"?"local":"cpu",selected:null,moves:[],aiThinking:false,autoPlay:false,fullLog:Array.isArray(migrated.fullLog)?migrated.fullLog:[],log:Array.isArray(migrated.log)?migrated.log:[],snapshots,history:Array.isArray(migrated.history)?migrated.history:[]};
+    return{...migrated,gameMode:["local","online"].includes(migrated.gameMode)?migrated.gameMode:"cpu",selected:null,moves:[],aiThinking:false,autoPlay:false,fullLog:Array.isArray(migrated.fullLog)?migrated.fullLog:[],log:Array.isArray(migrated.log)?migrated.log:[],snapshots,history:Array.isArray(migrated.history)?migrated.history:[]};
   }catch(error){return reject("JSON破損")}
 }
 
@@ -452,7 +593,7 @@ function clickSquare(x,y){
   else{
     state.selected=null;
     state.moves=[];
-    state.message=isLocalGame()?bilingual(`${owner(state.turn)}の駒または持ち駒を選んでください。`,`Select one of ${owner(state.turn)}'s pieces or pieces in hand.`):bilingual("自分の駒または持ち駒を選んでください。","Select one of your pieces or a piece in hand.");
+    state.message=isLocalGame()?bilingual(`${owner(state.turn)}の駒または持ち駒を選んでください。`,`Select one of ${owner(state.turn)}'s pieces or pieces in hand.`):isOnlineGame()?turnPrompt(state.turn):bilingual("自分の駒または持ち駒を選んでください。","Select one of your pieces or a piece in hand.");
     render();
   }
 }
@@ -600,7 +741,7 @@ function returnToCurrent(){
 }
 
 function undoTarget(){
-  if(!state||state.autoPlay||state.aiThinking||replayIndex!==null)return null;
+  if(!state||state.autoPlay||state.aiThinking||replayIndex!==null||isOnlineGame())return null;
   const lastMove=isLocalGame()?(state.fullLog||[]).at(-1):[...(state.fullLog||[])].reverse().find(item=>item.color===HUMAN);
   if(!lastMove)return null;
   const targetPly=Math.max(0,lastMove.number-1);
@@ -676,6 +817,7 @@ function render(){
   msg.textContent=replayIndex!==null?(shown.message||bilingual("過去局面を表示中です。","Viewing a previous position.")):state.message;
   msg.className=`message ${replayIndex!==null?(shown.tone||"info"):state.tone}`;
   document.getElementById("end-actions").hidden=!state.winner;
+  document.getElementById("reset").disabled=isOnlineGame();
   saveGame();
 }
 
@@ -689,6 +831,7 @@ function bind(){
     if(b)selectHand(CPU,+b.dataset.handIndex);
   });
   document.getElementById("reset").addEventListener("click",()=>{
+    if(isOnlineGame())return;
     replayIndex=null;
     localStorage.removeItem(SAVE_KEY);
     state=initialState();
@@ -714,12 +857,18 @@ function bind(){
   });
   const mode=document.getElementById("game-mode");
   mode.value=gameMode;
-  mode.addEventListener("change",()=>{
-    gameMode=mode.value==="local"?"local":"cpu";
+  mode.addEventListener("change",async()=>{
+    const nextMode=["local","online"].includes(mode.value)?mode.value:"cpu";
+    if(gameMode==="online"&&nextMode!=="online"){
+      if(onlineUnsubscribe)await onlineUnsubscribe();
+      if(onlinePollTimer)clearInterval(onlinePollTimer);
+      onlineUnsubscribe=null;onlinePollTimer=null;onlineSession=null;localStorage.removeItem(ONLINE_SESSION_KEY);viewerColor=HUMAN;
+    }
+    gameMode=nextMode;
     localStorage.setItem("attributeShogiGameMode",gameMode);
     state.gameMode=gameMode;
     state.selected=null;state.moves=[];state.aiThinking=false;
-    state.message=gameMode==="local"?bilingual("同じ端末での2人対戦へ切り替えました。現在の局面から続けます。","Switched to two-player mode on this device. The current position continues."):bilingual("CPU対戦へ切り替えました。現在の局面から続けます。","Switched to CPU mode. The current position continues.");
+    state.message=gameMode==="local"?bilingual("同じ端末での2人対戦へ切り替えました。現在の局面から続けます。","Switched to two-player mode on this device. The current position continues."):gameMode==="online"?bilingual("オンライン対戦の部屋を作成するか、招待コードで参加してください。","Create an online room or join with an invite code."):bilingual("CPU対戦へ切り替えました。現在の局面から続けます。","Switched to CPU mode. The current position continues.");
     state.tone="info";
     applyLanguage();render();
     if(gameMode==="cpu"&&state.turn===CPU&&!state.winner){state.aiThinking=true;setTimeout(runAi,450)}
@@ -775,6 +924,13 @@ function bind(){
   document.getElementById("export-record").addEventListener("click",exportRecord);
   document.getElementById("copy-diagnostics").addEventListener("click",copyDiagnostics);
   document.getElementById("copy-feedback-template").addEventListener("click",copyFeedbackTemplate);
+  document.getElementById("create-online-room").addEventListener("click",createOnlineRoom);
+  document.getElementById("join-online-room").addEventListener("click",joinOnlineRoom);
+  document.getElementById("room-code").addEventListener("input",event=>{event.target.value=event.target.value.toUpperCase().replace(/[^A-Z2-9]/g,"").slice(0,6)});
+  document.getElementById("copy-room-code").addEventListener("click",async()=>{
+    const code=document.getElementById("room-code").value;
+    try{await navigator.clipboard.writeText(code);setOnlineStatus(bilingual("招待コードをコピーしました。","Invite code copied."),"success")}catch(_error){setOnlineStatus(bilingual(`招待コード: ${code}`,`Invite code: ${code}`),"info")}
+  });
   document.getElementById("practice-reset").addEventListener("click",resetPracticeTutorial);
   document.getElementById("practice-prev").addEventListener("click",()=>{if(practiceStep>0){practiceStep--;resetPracticeTutorial()}});
   document.getElementById("practice-next").addEventListener("click",()=>{
@@ -786,12 +942,12 @@ function bind(){
   const resignDialog=document.getElementById("resign-dialog");
   document.getElementById("resign").addEventListener("click",()=>{
     if(state.winner||state.aiThinking||!isPlayerControlled(state.turn))return;
-    document.querySelector("#resign-dialog p").textContent=isLocalGame()?bilingual(`${owner(state.turn)}が投了すると${owner(enemy(state.turn))}の勝利となります。`,`If ${owner(state.turn)} resigns, ${owner(enemy(state.turn))} wins.`):bilingual("投了するとCPUの勝利となり、対局は終了します。","Resigning ends the game with a CPU victory.");
+    document.querySelector("#resign-dialog p").textContent=isLocalGame()||isOnlineGame()?bilingual(`${owner(state.turn)}が投了すると${owner(enemy(state.turn))}の勝利となります。`,`If ${owner(state.turn)} resigns, ${owner(enemy(state.turn))} wins.`):bilingual("投了するとCPUの勝利となり、対局は終了します。","Resigning ends the game with a CPU victory.");
     resignDialog.showModal();
   });
   document.getElementById("resign-yes").addEventListener("click",()=>{
     const actor=state.turn,winner=enemy(actor);
-    resignDialog.close();state.winner=winner;state.selected=null;state.moves=[];state.message=isLocalGame()?bilingual(`${owner(actor)}が投了しました。${resultForViewer(winner)}`,`${owner(actor)} resigned. ${resultForViewer(winner)}`):uiLanguage==="en"?`You resigned. ${resultForViewer(winner)}`:`あなたが投了しました。${resultForViewer(winner)}`;state.tone="success";addLog(isLocalGame()?bilingual(`${owner(actor)} 投了`,`${owner(actor)} resigned`):bilingual("先手 投了","You resigned"),actor);render();
+    resignDialog.close();state.winner=winner;state.selected=null;state.moves=[];state.message=isLocalGame()||isOnlineGame()?bilingual(`${owner(actor)}が投了しました。${resultForViewer(winner)}`,`${owner(actor)} resigned. ${resultForViewer(winner)}`):uiLanguage==="en"?`You resigned. ${resultForViewer(winner)}`:`あなたが投了しました。${resultForViewer(winner)}`;state.tone="success";addLog(isLocalGame()||isOnlineGame()?bilingual(`${owner(actor)} 投了`,`${owner(actor)} resigned`):bilingual("先手 投了","You resigned"),actor);render();stateMutationHook("resign");
   });
   document.getElementById("resign-no").addEventListener("click",()=>resignDialog.close());
 }
@@ -802,7 +958,7 @@ async function bootstrap(){
     if(!r.ok)throw Error(bilingual("属性設定を読み込めません","Could not load element settings"));
     ATTRIBUTE_DATA=await r.json();
     state=restoreGame()||initialState();
-    gameMode=state.gameMode==="local"?"local":"cpu";
+    gameMode=["local","online"].includes(state.gameMode)?state.gameMode:"cpu";
     state.gameMode=gameMode;
     localStorage.setItem("attributeShogiGameMode",gameMode);
     if(saveNotice){state.message=saveNotice;state.tone="warning"}
@@ -810,6 +966,7 @@ async function bootstrap(){
     bind();
     applyLanguage();
     render();
+    if(gameMode==="online")await restoreOnlineSession();
     if(localStorage.getItem("attributeShogiTutorialSeen")!=="yes")document.getElementById("rules-dialog").showModal();
     if(gameMode==="cpu"&&state.turn===CPU&&!state.winner){state.aiThinking=true;setTimeout(runAi,450)}
   }catch(e){

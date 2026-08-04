@@ -19,6 +19,8 @@ $packageFiles = @(
   "styles.css",
   "app.js",
   "game-core.js",
+  "supabase-config.js",
+  "online-client.js",
   "attributes.json",
   "service-worker.js",
   "manifest.webmanifest",

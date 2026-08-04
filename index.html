@@ -80,6 +80,7 @@
               <select id="game-mode">
                 <option value="cpu" selected>CPU対戦</option>
                 <option value="local">同じ端末で2人対戦</option>
+                <option value="online">招待コードでオンライン対戦</option>
               </select>
             </label>
             <label><span id="cpu-label">CPU難易度</span>
@@ -97,6 +98,18 @@
             </label>
             <button id="sound-toggle" type="button" class="secondary" aria-pressed="false">🔊 効果音</button>
             <label>音量 <input id="sound-volume" type="range" min="0" max="1" step="0.1" value="0.7"></label>
+          </div>
+          <div id="online-panel" class="online-panel" hidden>
+            <p id="online-description">部屋を作成して6文字の招待コードを相手へ伝えるか、受け取ったコードで参加します。</p>
+            <div class="online-actions">
+              <button id="create-online-room" type="button">部屋を作成</button>
+              <label><span id="room-code-label">招待コード</span>
+                <input id="room-code" type="text" inputmode="text" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC234">
+              </label>
+              <button id="join-online-room" type="button" class="secondary">部屋に参加</button>
+              <button id="copy-room-code" type="button" class="secondary" hidden>コードをコピー</button>
+            </div>
+            <p id="online-status" class="online-status" role="status" aria-live="polite">未接続</p>
           </div>
         </section>
         <section class="menu-section" aria-labelledby="tools-title">
@@ -205,7 +218,10 @@
     </dialog>
 
     <footer class="app-footer">属性将棋 Ver0.1.0-rc.2</footer>
-    <script src="game-core.js?v=17"></script>
-    <script src="app.js?v=54"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
+    <script src="supabase-config.js?v=1"></script>
+    <script src="online-client.js?v=1"></script>
+    <script src="game-core.js?v=18"></script>
+    <script src="app.js?v=55"></script>
   </body>
 </html>
