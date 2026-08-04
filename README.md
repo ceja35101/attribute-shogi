@@ -2,7 +2,9 @@
 
 公開版: [https://ceja35101.github.io/attribute-shogi/](https://ceja35101.github.io/attribute-shogi/)
 
-現在は無料公開ベータです。参加方法と確認項目は [BETA_TEST_GUIDE.md](BETA_TEST_GUIDE.md)、募集方法は [BETA_RECRUITMENT.md](BETA_RECRUITMENT.md) を参照してください。
+itch.io: [https://ceja35101.itch.io/attribute-shogi](https://ceja35101.itch.io/attribute-shogi)
+
+現在は無料公開ベータです。参加方法と確認項目は [BETA_TEST_GUIDE.md](BETA_TEST_GUIDE.md)、募集方法は [BETA_RECRUITMENT.md](BETA_RECRUITMENT.md)、正式版への移行基準は [PUBLIC_BETA_OPERATIONS.md](PUBLIC_BETA_OPERATIONS.md) を参照してください。
 
 English: [Rules](RULES_EN.md) · [Privacy](PRIVACY_EN.md) · [Beta Test Guide](BETA_TEST_GUIDE_EN.md) · [itch.io Page](ITCH_PAGE_EN.md)
 
@@ -45,6 +47,12 @@ PowerShellで次を実行すると、`index.html`を直下に含むHTML5ゲー�
 
 公開設定と確認手順は [ITCH_RELEASE_CHECKLIST.md](ITCH_RELEASE_CHECKLIST.md)、掲載本文は [日本語](ITCH_PAGE.md)／[English](ITCH_PAGE_EN.md) を参照してください。
 
+公開物のバージョン、キャッシュ、画像、ZIP構造は次で検証できます。
+
+```powershell
+.\.conda\python.exe tools\validate-release.py --archive
+```
+
 ## ルール
 
 現在の実装に対応する全文は [RULES.md](RULES.md) を参照してください。
@@ -60,6 +68,7 @@ PowerShellで次を実行すると、`index.html`を直下に含むHTML5ゲー�
 ## ゲーム設定
 
 - CPU難易度は「やさしい」「ふつう」「むずかしい」の3段階です。
+- 対戦モードは「CPU対戦」と「同じ端末で2人対戦」から選択できます。
 - 効果音は画面上部からミュートできます。
 - 初回起動時にチュートリアルを表示し、「遊び方・ルール」からいつでも再表示できます。
 - 難易度、ミュート、チュートリアル表示済みの設定はブラウザーに保存します。

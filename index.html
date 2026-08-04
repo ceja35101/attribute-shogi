@@ -76,7 +76,13 @@
         <section class="menu-section" aria-labelledby="settings-title">
           <h3 id="settings-title">設定</h3>
           <div class="game-settings" aria-label="ゲーム設定">
-            <label>CPU
+            <label><span id="game-mode-label">対戦モード</span>
+              <select id="game-mode">
+                <option value="cpu" selected>CPU対戦</option>
+                <option value="local">同じ端末で2人対戦</option>
+              </select>
+            </label>
+            <label><span id="cpu-label">CPU難易度</span>
               <select id="cpu-difficulty">
                 <option value="easy">やさしい</option>
                 <option value="normal" selected>ふつう</option>
@@ -199,7 +205,7 @@
     </dialog>
 
     <footer class="app-footer">属性将棋 Ver0.1.0-rc.2</footer>
-    <script src="game-core.js?v=16"></script>
-    <script src="app.js?v=53"></script>
+    <script src="game-core.js?v=17"></script>
+    <script src="app.js?v=54"></script>
   </body>
 </html>

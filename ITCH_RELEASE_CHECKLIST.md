@@ -2,6 +2,8 @@
 
 対象バージョン: `0.1.0-rc.2`
 
+公開URL: [https://ceja35101.itch.io/attribute-shogi](https://ceja35101.itch.io/attribute-shogi)
+
 ## アップロード前
 
 - [x] `index.html`がZIP直下にある
@@ -10,8 +12,9 @@
 - [x] マウス、タッチ、キーボードで操作できる
 - [x] セーブ、設定、棋譜はブラウザー内だけに保存する
 - [x] ライセンス、素材権利、プライバシー文書がある
-- [x] 72件の回帰テスト、耐久テスト、500局自己対戦を通過させる
+- [x] 73件の回帰テスト、耐久テスト、500局自己対戦を通過させる
 - [x] itch.io用630×500カバー画像を用意する
+- [x] 実ゲーム画面のスクリーンショット4枚を用意する
 - [ ] Android Chrome実機で確認する（端末確保後の外部確認）
 
 ## ZIP生成
@@ -38,9 +41,11 @@ dist/attribute-shogi-0.1.0-rc.2-itch.zip
 6. ZIPをアップロードし、`This file will be played in the browser`を有効にする。
 7. Embed optionsは`Embed in page`、Viewportは`1280 × 900`、`Mobile friendly`を有効にする。
 8. Cover imageへ`itch-cover-630x500-v2.jpg`を設定する。
-9. 日本語本文は`ITCH_PAGE.md`、英語本文は`ITCH_PAGE_EN.md`を基に記載する。
-10. Draft状態でPCとiPhoneから起動・新規対局・保存復元・チュートリアルを確認する。
-11. 問題がなければVisibilityを`Public`へ変更する。
+9. `itch-screenshots/`の4画像を番号順にアップロードする。
+10. 英語本文は`ITCH_PAGE_EN.md`、日本語本文は`ITCH_PAGE.md`を基に記載する。
+11. Commentsを有効にし、AI Disclosureで画像へのAI支援利用を申告する。
+12. Draft状態でPCとiPhoneから起動・新規対局・保存復元・チュートリアルを確認する。
+13. 問題がなければVisibilityを`Public`へ変更し、`Unlisted in search & browse`は無効にする。
 
 ## 公開後
 

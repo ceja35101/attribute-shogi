@@ -27,7 +27,7 @@ The game does not automatically transmit personal data or game records.
 
 ## Known Limitations
 
-- CPU opponent only
+- CPU matches and two-player matches on the same device
 - No online multiplayer
 - Android Chrome has not been tested on physical hardware
 - English localization is in beta

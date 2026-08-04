@@ -5,7 +5,7 @@ const target = process.argv[2];
 const cases = {
   regression: {
     url: "http://127.0.0.1:8000/tests/regression.html",
-    expected: "72/72 件成功",
+    expected: "73/73 件成功",
     timeout: 45_000,
   },
   durability: {

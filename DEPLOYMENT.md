@@ -2,6 +2,8 @@
 
 公開URL: [https://ceja35101.github.io/attribute-shogi/](https://ceja35101.github.io/attribute-shogi/)
 
+itch.io: [https://ceja35101.itch.io/attribute-shogi](https://ceja35101.itch.io/attribute-shogi)
+
 ## リリース前確認
 
 1. `VERSION`、画面フッター、`CHANGELOG.md`のバージョンを一致させる。

@@ -20,12 +20,17 @@ promotionPrompt=p=>new Promise(resolve=>{
 
 const shownState=()=>replayIndex===null?state:state.snapshots[replayIndex]?.position||state;
 const bilingual=(ja,en)=>uiLanguage==="en"?en:ja;
+const isLocalGame=()=>gameMode==="local";
+const isPlayerControlled=color=>color===HUMAN||isLocalGame();
+const actorLabel=color=>isLocalGame()?(color===HUMAN?bilingual("先手","Sente"):bilingual("後手","Gote")):color===HUMAN?bilingual("先手","You"):bilingual("後手","CPU");
+const turnPrompt=color=>isLocalGame()?bilingual(`${color===HUMAN?"先手":"後手"}の番です。駒または持ち駒を選んでください。`,`${color===HUMAN?"Sente":"Gote"}'s turn. Select a piece or a piece in hand.`):bilingual("あなたの番です。駒または持ち駒を選んでください。","Your turn. Select a piece or a piece in hand.");
 
 const STATIC_TRANSLATIONS={
   "#reset":["初期化","Reset"],"#resign":["投了","Resign"],"#new-game":["もう一度対局する","Play again"],
   "#menu-title":["ルール・設定","Rules & Settings"],"#close-menu":["閉じる","Close"],"#close-rules":["閉じる","Close"],
   "#rule-summary-title":["ルール概要","Rule Summary"],"#open-rules":["詳しい遊び方・ルール","How to Play"],
   "#settings-title":["設定","Settings"],"#tools-title":["その他の操作","Other Actions"],
+  "#game-mode-label":["対戦モード","Game Mode"],"#cpu-label":["CPU難易度","CPU Difficulty"],
   "#undo-turn":["待った","Undo"],"#save-game":["対局を保存","Save Game"],"#export-record":["棋譜を出力","Export Record"],
   "#copy-diagnostics":["診断情報をコピー","Copy Diagnostics"],"#feedback-title":["ベータテスト","Beta Test"],
   "#copy-feedback-template":["感想テンプレートをコピー","Copy Feedback Template"],
@@ -50,8 +55,8 @@ function applyLanguage(){
     if(element)element.textContent=texts[uiLanguage==="en"?1:0];
   }
   const handTitles=document.querySelectorAll(".hand-panel h2");
-  if(handTitles[0])handTitles[0].textContent=bilingual("後手の持ち駒","CPU Pieces in Hand");
-  if(handTitles[1])handTitles[1].textContent=bilingual("先手の持ち駒","Your Pieces in Hand");
+  if(handTitles[0])handTitles[0].textContent=isLocalGame()?bilingual("後手の持ち駒","Gote Pieces in Hand"):bilingual("後手の持ち駒","CPU Pieces in Hand");
+  if(handTitles[1])handTitles[1].textContent=isLocalGame()?bilingual("先手の持ち駒","Sente Pieces in Hand"):bilingual("先手の持ち駒","Your Pieces in Hand");
   const logTitle=document.querySelector(".log-panel h2");
   if(logTitle)logTitle.textContent=bilingual("直近5手","Last 5 Moves");
   const feedback=document.querySelector(".beta-feedback > p");
@@ -91,7 +96,7 @@ function applyLanguage(){
   document.getElementById("practice-cpu-hand-label").textContent=bilingual("CPUの持ち駒","CPU Pieces in Hand");
   document.getElementById("practice-human-hand-label").textContent=bilingual("自分の持ち駒","Your Pieces in Hand");
   document.querySelector("#promotion-dialog p").textContent=bilingual("成ると駒の動きが変わります。属性は変化しません。","Promotion changes movement. The element does not change.");
-  document.querySelector("#resign-dialog p").textContent=bilingual("投了するとCPUの勝利となり、対局は終了します。","Resigning ends the game with a CPU victory.");
+  document.querySelector("#resign-dialog p").textContent=isLocalGame()?bilingual("手番側が投了すると、相手側の勝利となります。","If the player to move resigns, the other player wins."):bilingual("投了するとCPUの勝利となり、対局は終了します。","Resigning ends the game with a CPU victory.");
   document.querySelector(".app-footer").textContent=bilingual(`属性将棋 Ver${APP_VERSION}`,`Elemental Shogi Ver${APP_VERSION}`);
   document.getElementById("language-select").value=uiLanguage;
   const difficultyOptions=document.getElementById("cpu-difficulty")?.options;
@@ -99,7 +104,12 @@ function applyLanguage(){
     const difficultyLabels=uiLanguage==="en"?["Easy","Normal","Hard"]:["やさしい","ふつう","むずかしい"];
     [...difficultyOptions].forEach((option,index)=>option.textContent=difficultyLabels[index]);
   }
-  if(state?.message==="あなたの番です。駒または持ち駒を選んでください。"||state?.message==="Your turn. Select a piece or a piece in hand.")state.message=bilingual("あなたの番です。駒または持ち駒を選んでください。","Your turn. Select a piece or a piece in hand.");
+  const modeOptions=document.getElementById("game-mode")?.options;
+  if(modeOptions){modeOptions[0].textContent=bilingual("CPU対戦","Vs CPU");modeOptions[1].textContent=bilingual("同じ端末で2人対戦","Two Players (Same Device)")}
+  document.getElementById("cpu-difficulty").disabled=isLocalGame();
+  document.getElementById("game-mode").value=gameMode;
+  const idlePrompts=["あなたの番です。駒または持ち駒を選んでください。","Your turn. Select a piece or a piece in hand.","先手の番です。駒または持ち駒を選んでください。","後手の番です。駒または持ち駒を選んでください。","Sente's turn. Select a piece or a piece in hand.","Gote's turn. Select a piece or a piece in hand."];
+  if(state&&idlePrompts.includes(state.message))state.message=turnPrompt(state.turn);
   renderPracticeTutorial();
 }
 
@@ -323,19 +333,19 @@ function restoreGame(){
     if(!s.hand||!Array.isArray(s.clashes)||!pieces.every(p=>PIECES[p.type]&&ATTRIBUTE_DATA[p.attr]))return reject("駒または衝突データ破損");
     const migrated=migrateSavedPosition(s),snapshots=Array.isArray(migrated.snapshots)?migrated.snapshots:[];
     for(const snapshot of snapshots)migrateSavedPosition(snapshot?.position);
-    return{...migrated,selected:null,moves:[],aiThinking:false,autoPlay:false,fullLog:Array.isArray(migrated.fullLog)?migrated.fullLog:[],log:Array.isArray(migrated.log)?migrated.log:[],snapshots,history:Array.isArray(migrated.history)?migrated.history:[]};
+    return{...migrated,gameMode:migrated.gameMode==="local"?"local":"cpu",selected:null,moves:[],aiThinking:false,autoPlay:false,fullLog:Array.isArray(migrated.fullLog)?migrated.fullLog:[],log:Array.isArray(migrated.log)?migrated.log:[],snapshots,history:Array.isArray(migrated.history)?migrated.history:[]};
   }catch(error){return reject("JSON破損")}
 }
 
 function exportRecord(){
-  const moves=(state.fullLog?.length?state.fullLog:[...state.log].reverse()).map(item=>`${item.number}. ${item.color===HUMAN?bilingual("先手","You"):bilingual("後手","CPU")} ${item.text}`);
+  const moves=(state.fullLog?.length?state.fullLog:[...state.log].reverse()).map(item=>`${item.number}. ${actorLabel(item.color)} ${item.text}`);
   const content=uiLanguage==="en"?["Elemental Shogi Game Record",`Exported: ${new Date().toLocaleString("en")}`,`Moves: ${state.ply}`,`Result: ${state.winner?state.winner==="draw"?"Draw":`${owner(state.winner)} won`:"In progress"}`,"",...moves].join("\n"):["属性将棋 棋譜",`出力日時: ${new Date().toLocaleString("ja-JP")}`,`手数: ${state.ply}`,`結果: ${state.winner?state.winner==="draw"?"引き分け":`${owner(state.winner)}の勝利`:"対局中"}`,"",...moves].join("\n");
   const blob=new Blob([content],{type:"text/plain;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
   a.href=url;a.download=`attribute-shogi-${new Date().toISOString().slice(0,10)}.txt`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
 async function copyDiagnostics(){
-  const details=[bilingual("属性将棋 診断情報","Elemental Shogi Diagnostics"),`Version: ${APP_VERSION}`,`UserAgent: ${navigator.userAgent}`,`${bilingual("手数","Moves")}: ${state.ply}`,`${bilingual("手番","Turn")}: ${state.turn}`,`${bilingual("勝者","Winner")}: ${state.winner||bilingual("なし","none")}`,`${bilingual("衝突数","Clashes")}: ${state.clashes.length}`,bilingual("直近ログ:","Recent log:"),...state.log.map(item=>`${item.number}. ${item.text}`)].join("\n");
+  const details=[bilingual("属性将棋 診断情報","Elemental Shogi Diagnostics"),`Version: ${APP_VERSION}`,`${bilingual("対戦モード","Game mode")}: ${gameMode}`,`UserAgent: ${navigator.userAgent}`,`${bilingual("手数","Moves")}: ${state.ply}`,`${bilingual("手番","Turn")}: ${state.turn}`,`${bilingual("勝者","Winner")}: ${state.winner||bilingual("なし","none")}`,`${bilingual("衝突数","Clashes")}: ${state.clashes.length}`,bilingual("直近ログ:","Recent log:"),...state.log.map(item=>`${item.number}. ${item.text}`)].join("\n");
   try{await navigator.clipboard.writeText(details);state.message=bilingual("診断情報をクリップボードへコピーしました。","Diagnostics copied to the clipboard.");state.tone="success"}catch(error){state.message=bilingual("診断情報をコピーできませんでした。HTTPSまたはlocalhostで開いてください。","Could not copy diagnostics. Open through HTTPS or localhost.");state.tone="error"}render();
 }
 
@@ -408,8 +418,8 @@ function selectBoard(x,y){
   const p=state.board[y][x];
   state.selected={kind:"board",x,y};
   state.moves=boardMoves(p,x,y);
-  if(!state.moves.length&&kingThreatened(HUMAN)){
-    const origins=[...new Set(allMoves(HUMAN).filter(m=>m.kind==="board").map(m=>coord(m.fromX,m.fromY)))];
+  if(!state.moves.length&&kingThreatened(state.turn)){
+    const origins=[...new Set(allMoves(state.turn).filter(m=>m.kind==="board").map(m=>coord(m.fromX,m.fromY)))];
     state.message=uiLanguage==="en"?`This ${symbol(p)} cannot answer the check.${origins.length?` Move a piece marked “Check response” (${origins.join(", ")}).`:""}`:`王手中です。この${symbol(p)}では回避できません。${origins.length?`「王手回避可」と表示された駒（${origins.join("、")}）を動かしてください。`:""}`;
     state.tone="warning";
   }else{
@@ -419,18 +429,18 @@ function selectBoard(x,y){
   render();
 }
 
-function selectHand(i){
+function selectHand(color,i){
   if(replayIndex!==null)return;
-  const p=state.hand[HUMAN][i];
+  const p=state.hand[color][i];
   if(!p)return;
-  state.selected={kind:"hand",index:i};
+  state.selected={kind:"hand",color,index:i};
   state.moves=dropMoves(p).map(m=>({...m,handIndex:i}));
   state.message=uiLanguage==="en"?`${symbol(p)} (${attrLabel(p.attr)}) selected from hand.`:`持ち駒 ${symbol(p)}（${attrLabel(p.attr)}属性）を選択中。`;
   render();
 }
 
 function clickSquare(x,y){
-  if(replayIndex!==null||state.winner||state.aiThinking||state.turn!==HUMAN)return;
+  if(replayIndex!==null||state.winner||state.aiThinking||!isPlayerControlled(state.turn))return;
   const m=state.moves.find(v=>v.x===x&&v.y===y);
   if(m){
     if(m.kind==="board")Object.assign(m,{fromX:state.selected.x,fromY:state.selected.y});
@@ -438,11 +448,11 @@ function clickSquare(x,y){
     return;
   }
   const p=state.board[y][x];
-  if(p&&p.color===HUMAN)selectBoard(x,y);
+  if(p&&p.color===state.turn)selectBoard(x,y);
   else{
     state.selected=null;
     state.moves=[];
-    state.message=bilingual("自分の駒または持ち駒を選んでください。","Select one of your pieces or a piece in hand.");
+    state.message=isLocalGame()?bilingual(`${owner(state.turn)}の駒または持ち駒を選んでください。`,`Select one of ${owner(state.turn)}'s pieces or pieces in hand.`):bilingual("自分の駒または持ち駒を選んでください。","Select one of your pieces or a piece in hand.");
     render();
   }
 }
@@ -460,8 +470,8 @@ function appendMoveArrow(el,lastMove,recent){
 function renderBoard(){
   const shown=shownState(),el=document.getElementById("board"),last=shown.lastMove;
   const recent=replayIndex===null&&last&&Date.now()-last.at<1400;
-  const checkEvasions=replayIndex===null&&shown.turn===HUMAN&&kingThreatened(HUMAN)
-    ?new Set(allMoves(HUMAN).filter(m=>m.kind==="board").map(m=>`${m.fromX},${m.fromY}`))
+  const checkEvasions=replayIndex===null&&isPlayerControlled(shown.turn)&&kingThreatened(shown.turn)
+    ?new Set(allMoves(shown.turn).filter(m=>m.kind==="board").map(m=>`${m.fromX},${m.fromY}`))
     :new Set();
   el.innerHTML="";
   shown.board.forEach((row,y)=>row.forEach((p,x)=>{
@@ -564,11 +574,12 @@ function renderHand(c,listId,stockId){
     list.appendChild(li);
     const b=document.createElement("button");
     b.type="button";
-    b.className=`stock-piece${replayIndex===null&&c===HUMAN&&state.selected?.kind==="hand"&&state.selected.index===i?" selected-hand":""}`;
+    b.className=`stock-piece${replayIndex===null&&c===state.turn&&state.selected?.kind==="hand"&&state.selected.color===c&&state.selected.index===i?" selected-hand":""}`;
     b.innerHTML=content;
     b.title=label;
     b.setAttribute("aria-label",label);
-    b.disabled=replayIndex!==null||c!==HUMAN||state.turn!==HUMAN||state.aiThinking;
+    b.disabled=replayIndex!==null||c!==state.turn||!isPlayerControlled(c)||state.aiThinking;
+    b.dataset.handColor=c;
     b.dataset.handIndex=i;
     stock.appendChild(b);
   });
@@ -590,9 +601,9 @@ function returnToCurrent(){
 
 function undoTarget(){
   if(!state||state.autoPlay||state.aiThinking||replayIndex!==null)return null;
-  const lastHuman=[...(state.fullLog||[])].reverse().find(item=>item.color===HUMAN);
-  if(!lastHuman)return null;
-  const targetPly=Math.max(0,lastHuman.number-1);
+  const lastMove=isLocalGame()?(state.fullLog||[]).at(-1):[...(state.fullLog||[])].reverse().find(item=>item.color===HUMAN);
+  if(!lastMove)return null;
+  const targetPly=Math.max(0,lastMove.number-1);
   let snapshotIndex=-1;
   for(let i=state.snapshots.length-1;i>=0;i--)if(state.snapshots[i].position?.ply===targetPly){snapshotIndex=i;break}
   return snapshotIndex<0?null:{targetPly,snapshotIndex};
@@ -609,7 +620,7 @@ function undoLastTurn(){
     for(let i=snapshots.length-1;i>=0;i--)if(snapshots[i].position?.ply===item.number){snapshotIndex=i;break}
     return{...item,snapshotIndex};
   });
-  state={...previous,...position,snapshots,fullLog,log,history:(previous.history||[]).slice(0,target.targetPly+1),selected:null,moves:[],aiThinking:false,autoPlay:false,winner:position.winner||null,message:bilingual("待ったを使用し、直前の自分の着手前へ戻りました。ここから棋譜が分岐します。","Undone to before your previous move. The game record now branches from this position."),tone:"warning"};
+  state={...previous,...position,snapshots,fullLog,log,history:(previous.history||[]).slice(0,target.targetPly+1),selected:null,moves:[],aiThinking:false,autoPlay:false,winner:position.winner||null,message:isLocalGame()?bilingual("待ったを使用し、直前の着手前へ戻りました。ここから棋譜が分岐します。","Undone to before the previous move. The game record now branches from this position."):bilingual("待ったを使用し、直前の自分の着手前へ戻りました。ここから棋譜が分岐します。","Undone to before your previous move. The game record now branches from this position."),tone:"warning"};
   replayIndex=null;
   lastSoundSnapshot=target.snapshotIndex;
   render();
@@ -621,7 +632,7 @@ function renderLog(){
   el.innerHTML="";
   state.log.forEach(item=>{
     const li=document.createElement("li"),button=document.createElement("button");
-    const actor=item.color===HUMAN?bilingual("先手","You"):item.color===CPU?bilingual("後手","CPU"):item.number%2?bilingual("先手","You"):bilingual("後手","CPU");
+    const actor=item.color===HUMAN||item.color===CPU?actorLabel(item.color):actorLabel(item.number%2?HUMAN:CPU);
     button.type="button";
     button.className="log-move-button";
     button.textContent=`${actor}　${item.text}`;
@@ -671,7 +682,11 @@ function render(){
 function bind(){
   document.getElementById("human-stock").addEventListener("click",e=>{
     const b=e.target.closest("[data-hand-index]");
-    if(b)selectHand(+b.dataset.handIndex);
+    if(b)selectHand(HUMAN,+b.dataset.handIndex);
+  });
+  document.getElementById("cpu-stock").addEventListener("click",e=>{
+    const b=e.target.closest("[data-hand-index]");
+    if(b)selectHand(CPU,+b.dataset.handIndex);
   });
   document.getElementById("reset").addEventListener("click",()=>{
     replayIndex=null;
@@ -696,6 +711,18 @@ function bind(){
   difficulty.addEventListener("change",()=>{
     cpuDifficulty=difficulty.value;
     localStorage.setItem("attributeShogiDifficulty",cpuDifficulty);
+  });
+  const mode=document.getElementById("game-mode");
+  mode.value=gameMode;
+  mode.addEventListener("change",()=>{
+    gameMode=mode.value==="local"?"local":"cpu";
+    localStorage.setItem("attributeShogiGameMode",gameMode);
+    state.gameMode=gameMode;
+    state.selected=null;state.moves=[];state.aiThinking=false;
+    state.message=gameMode==="local"?bilingual("同じ端末での2人対戦へ切り替えました。現在の局面から続けます。","Switched to two-player mode on this device. The current position continues."):bilingual("CPU対戦へ切り替えました。現在の局面から続けます。","Switched to CPU mode. The current position continues.");
+    state.tone="info";
+    applyLanguage();render();
+    if(gameMode==="cpu"&&state.turn===CPU&&!state.winner){state.aiThinking=true;setTimeout(runAi,450)}
   });
   const language=document.getElementById("language-select");
   language.value=uiLanguage;
@@ -757,9 +784,14 @@ function bind(){
   });
   document.getElementById("app-version").textContent=APP_VERSION;
   const resignDialog=document.getElementById("resign-dialog");
-  document.getElementById("resign").addEventListener("click",()=>{if(!state.winner&&state.turn===HUMAN&&!state.aiThinking)resignDialog.showModal()});
+  document.getElementById("resign").addEventListener("click",()=>{
+    if(state.winner||state.aiThinking||!isPlayerControlled(state.turn))return;
+    document.querySelector("#resign-dialog p").textContent=isLocalGame()?bilingual(`${owner(state.turn)}が投了すると${owner(enemy(state.turn))}の勝利となります。`,`If ${owner(state.turn)} resigns, ${owner(enemy(state.turn))} wins.`):bilingual("投了するとCPUの勝利となり、対局は終了します。","Resigning ends the game with a CPU victory.");
+    resignDialog.showModal();
+  });
   document.getElementById("resign-yes").addEventListener("click",()=>{
-    resignDialog.close();state.winner=CPU;state.selected=null;state.moves=[];state.message=uiLanguage==="en"?`You resigned. ${resultForViewer(CPU)}`:`あなたが投了しました。${resultForViewer(CPU)}`;state.tone="success";addLog(bilingual("先手 投了","You resigned"),HUMAN);render();
+    const actor=state.turn,winner=enemy(actor);
+    resignDialog.close();state.winner=winner;state.selected=null;state.moves=[];state.message=isLocalGame()?bilingual(`${owner(actor)}が投了しました。${resultForViewer(winner)}`,`${owner(actor)} resigned. ${resultForViewer(winner)}`):uiLanguage==="en"?`You resigned. ${resultForViewer(winner)}`:`あなたが投了しました。${resultForViewer(winner)}`;state.tone="success";addLog(isLocalGame()?bilingual(`${owner(actor)} 投了`,`${owner(actor)} resigned`):bilingual("先手 投了","You resigned"),actor);render();
   });
   document.getElementById("resign-no").addEventListener("click",()=>resignDialog.close());
 }
@@ -770,13 +802,16 @@ async function bootstrap(){
     if(!r.ok)throw Error(bilingual("属性設定を読み込めません","Could not load element settings"));
     ATTRIBUTE_DATA=await r.json();
     state=restoreGame()||initialState();
+    gameMode=state.gameMode==="local"?"local":"cpu";
+    state.gameMode=gameMode;
+    localStorage.setItem("attributeShogiGameMode",gameMode);
     if(saveNotice){state.message=saveNotice;state.tone="warning"}
     else if(state.ply>0&&!state.winner){state.message=bilingual(`保存した対局を${state.ply}手目から再開しました。`,`Resumed the saved game from move ${state.ply}.`);state.tone="info"}
     bind();
     applyLanguage();
     render();
     if(localStorage.getItem("attributeShogiTutorialSeen")!=="yes")document.getElementById("rules-dialog").showModal();
-    if(state.turn===CPU&&!state.winner){state.aiThinking=true;setTimeout(runAi,450)}
+    if(gameMode==="cpu"&&state.turn===CPU&&!state.winner){state.aiThinking=true;setTimeout(runAi,450)}
   }catch(e){
     const message=document.getElementById("message");
     message.textContent=bilingual(`起動エラー: ${e.message}。HTTPサーバーから開いてください。`,`Startup error: ${e.message}. Open the game through an HTTP server.`);

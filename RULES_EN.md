@@ -63,9 +63,10 @@ Captured pieces return unpromoted and can be dropped on a legal empty square. Ni
 ## Current Beta Scope
 
 - Single player versus a rule-based CPU
+- Two-player matches on the same device
 - Three difficulty levels
 - Save, undo, game-record replay and export
 - Keyboard, mouse and touch controls
 - Japanese and English display
 
-Online and local two-player modes are not included in this beta.
+Online multiplayer is not included in this beta.
