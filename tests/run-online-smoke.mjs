@@ -40,6 +40,14 @@ try {
   await host.waitForFunction(() => document.querySelector("#online-status")?.textContent.includes("接続中"));
   await host.click("#close-menu");
   await guest.click("#close-menu");
+  const guestPerspective=await guest.evaluate(()=>({
+    first:[document.querySelector("#board .square")?.dataset.x,document.querySelector("#board .square")?.dataset.y],
+    ownFlipped:document.querySelector("#board .piece.black .piece-symbol")?.classList.contains("flipped"),
+    opponentFlipped:document.querySelector("#board .piece.white .piece-symbol")?.classList.contains("flipped"),
+    xAxis:[...document.querySelectorAll(".board-axis-x span")].map(span=>span.textContent).join(""),
+    ownHandOrder:getComputedStyle(document.querySelector(".hand-black")).order,
+  }));
+  if(guestPerspective.first.join(",")!=="8,8"||guestPerspective.ownFlipped||!guestPerspective.opponentFlipped||guestPerspective.xAxis!=="987654321"||guestPerspective.ownHandOrder!=="2")throw new Error(`Gote perspective failed: ${JSON.stringify(guestPerspective)}`);
 
   await host.click('.square[data-x="4"][data-y="6"]');
   await host.click('.square[data-x="4"][data-y="5"]');

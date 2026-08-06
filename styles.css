@@ -981,6 +981,14 @@ button.danger:hover { background: #991b1b; }
 }
 .piece.white { background: #f1cf8b; color: #111827; }
 
+/* オンライン後手視点では、後手を手前・上向きにして盤全体を反転する。 */
+.viewer-gote .piece.black { transform: none; }
+.viewer-gote .piece.white { transform: rotate(180deg); }
+.viewer-gote .piece.black .king-damage { transform: none; }
+.viewer-gote .piece.white .king-damage { transform: rotate(180deg); }
+.viewer-gote .square.recent-move .piece.black { animation-name: piece-arrive; }
+.viewer-gote .square.recent-move .piece.white { animation-name: piece-arrive-black; }
+
 .piece .piece-symbol {
   display: inline-block;
   line-height: 1;
@@ -1429,6 +1437,12 @@ button.secondary { background: #263449; border: 1px solid rgba(255,255,255,.09);
 }
 
 .captured-mirror { display: none; }
+
+.viewer-gote .hand-white { order: 1; }
+.viewer-gote .hand-black { order: 2; }
+.viewer-gote .play-sidebar .log-panel { order: 3; }
+.viewer-gote .hand-piece-icon.black { transform: none; }
+.viewer-gote .hand-piece-icon.white { transform: rotate(180deg); }
 
 .online-panel {
   margin-top: 12px;

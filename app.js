@@ -23,6 +23,8 @@ const shownState=()=>replayIndex===null?state:state.snapshots[replayIndex]?.posi
 const bilingual=(ja,en)=>uiLanguage==="en"?en:ja;
 const isLocalGame=()=>gameMode==="local";
 const isOnlineGame=()=>gameMode==="online";
+const viewingFromGote=()=>isOnlineGame()&&viewerColor===CPU;
+const symbolFacesAway=color=>uiLanguage==="ja"&&(viewingFromGote()?color===HUMAN:color===CPU);
 const isPlayerControlled=color=>isOnlineGame()?Boolean(onlineSession?.connected&&viewerColor===color):color===HUMAN||isLocalGame();
 const actorLabel=color=>isLocalGame()||isOnlineGame()?(color===HUMAN?bilingual("先手","Sente"):bilingual("後手","Gote")):color===HUMAN?bilingual("先手","You"):bilingual("後手","CPU");
 const turnPrompt=color=>isLocalGame()?bilingual(`${color===HUMAN?"先手":"後手"}の番です。駒または持ち駒を選んでください。`,`${color===HUMAN?"Sente":"Gote"}'s turn. Select a piece or a piece in hand.`):isOnlineGame()?(color===viewerColor?bilingual("あなたの番です。駒または持ち駒を選んでください。","Your turn. Select a piece or a piece in hand."):bilingual("相手の着手を待っています。","Waiting for the opponent.")):bilingual("あなたの番です。駒または持ち駒を選んでください。","Your turn. Select a piece or a piece in hand.");
@@ -63,6 +65,10 @@ function generateRoomCode(){
   const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",bytes=new Uint8Array(6);
   crypto.getRandomValues(bytes);
   return [...bytes].map(value=>alphabet[value%alphabet.length]).join("");
+}
+
+function normalizeRoomCode(value){
+  return String(value||"").normalize("NFKC").toUpperCase().replace(/[^A-Z2-9]/g,"").slice(0,6);
 }
 
 function onlineStatePayload(){
@@ -128,7 +134,8 @@ async function createOnlineRoom(){
 }
 
 async function joinOnlineRoom(){
-  const api=window.AttributeShogiOnline,code=document.getElementById("room-code").value.trim().toUpperCase();
+  const input=document.getElementById("room-code"),api=window.AttributeShogiOnline,code=normalizeRoomCode(input.value);
+  input.value=code;
   if(!/^[A-Z2-9]{6}$/.test(code)){setOnlineStatus(bilingual("6文字の招待コードを入力してください。","Enter the 6-character invite code."),"error");return}
   const button=document.getElementById("join-online-room");button.disabled=true;
   try{
@@ -190,8 +197,8 @@ function applyLanguage(){
     if(element)element.textContent=texts[uiLanguage==="en"?1:0];
   }
   const handTitles=document.querySelectorAll(".hand-panel h2");
-  if(handTitles[0])handTitles[0].textContent=isLocalGame()||isOnlineGame()?bilingual("後手の持ち駒","Gote Pieces in Hand"):bilingual("後手の持ち駒","CPU Pieces in Hand");
-  if(handTitles[1])handTitles[1].textContent=isLocalGame()||isOnlineGame()?bilingual("先手の持ち駒","Sente Pieces in Hand"):bilingual("先手の持ち駒","Your Pieces in Hand");
+  if(handTitles[0])handTitles[0].textContent=isOnlineGame()?(viewerColor===CPU?bilingual("あなたの持ち駒（後手）","Your Pieces in Hand (Gote)"):bilingual("相手の持ち駒（後手）","Opponent's Pieces in Hand (Gote)")):isLocalGame()?bilingual("後手の持ち駒","Gote Pieces in Hand"):bilingual("後手の持ち駒","CPU Pieces in Hand");
+  if(handTitles[1])handTitles[1].textContent=isOnlineGame()?(viewerColor===HUMAN?bilingual("あなたの持ち駒（先手）","Your Pieces in Hand (Sente)"):bilingual("相手の持ち駒（先手）","Opponent's Pieces in Hand (Sente)")):isLocalGame()?bilingual("先手の持ち駒","Sente Pieces in Hand"):bilingual("先手の持ち駒","Your Pieces in Hand");
   const logTitle=document.querySelector(".log-panel h2");
   if(logTitle)logTitle.textContent=bilingual("直近5手","Last 5 Moves");
   const feedback=document.querySelector(".beta-feedback > p");
@@ -604,7 +611,8 @@ function appendMoveArrow(el,lastMove,recent){
   svg.classList.add("move-arrow");
   svg.setAttribute("viewBox","0 0 9 9");
   svg.setAttribute("aria-hidden","true");
-  svg.innerHTML=`<defs><marker id="move-arrow-head" markerWidth=".55" markerHeight=".55" refX=".43" refY=".275" orient="auto"><path d="M0,0 L.55,.275 L0,.55 Z"></path></marker></defs><line x1="${lastMove.from.x+.5}" y1="${lastMove.from.y+.5}" x2="${lastMove.to.x+.5}" y2="${lastMove.to.y+.5}" marker-end="url(#move-arrow-head)"></line>`;
+  const display=point=>viewingFromGote()?{x:8-point.x,y:8-point.y}:point,from=display(lastMove.from),to=display(lastMove.to);
+  svg.innerHTML=`<defs><marker id="move-arrow-head" markerWidth=".55" markerHeight=".55" refX=".43" refY=".275" orient="auto"><path d="M0,0 L.55,.275 L0,.55 Z"></path></marker></defs><line x1="${from.x+.5}" y1="${from.y+.5}" x2="${to.x+.5}" y2="${to.y+.5}" marker-end="url(#move-arrow-head)"></line>`;
   el.appendChild(svg);
 }
 
@@ -615,7 +623,12 @@ function renderBoard(){
     ?new Set(allMoves(shown.turn).filter(m=>m.kind==="board").map(m=>`${m.fromX},${m.fromY}`))
     :new Set();
   el.innerHTML="";
-  shown.board.forEach((row,y)=>row.forEach((p,x)=>{
+  document.querySelector(".game-panel")?.classList.toggle("viewer-gote",viewingFromGote());
+  const axisLabels=viewingFromGote()?[9,8,7,6,5,4,3,2,1]:[1,2,3,4,5,6,7,8,9];
+  document.querySelectorAll(".board-axis-x span").forEach((span,index)=>{span.textContent=axisLabels[index]});
+  document.querySelectorAll(".board-axis-y span").forEach((span,index)=>{span.textContent=axisLabels[index]});
+  for(let displayY=0;displayY<9;displayY++)for(let displayX=0;displayX<9;displayX++){
+    const x=viewingFromGote()?8-displayX:displayX,y=viewingFromGote()?8-displayY:displayY,p=shown.board[y][x];
     const b=document.createElement("button");
     const clash=shown.clashes.find(c=>c.x===x&&c.y===y);
     const supportSlot=shown.clashes.find(c=>c.support.some(slot=>slot.x===x&&slot.y===y));
@@ -655,7 +668,7 @@ function renderBoard(){
       const lockText=lockedClashes.length?` / 衝突${lockedClashes.map(c=>shown.clashes.indexOf(c)+1).join("・")}への援軍権使用済み`:"";
       b.title=`${symbol(p)} / ${attrLabel(p.attr)}${uiLanguage==="ja"?"属性":""}${p.type==="king"?` / ${bilingual("耐久","Durability")} ${4-(p.weakHits||0)}/4`:""}${lockText}`;
       const lockBadge=lockedClashes.length?`<span class="support-used-badge">援${lockedClashes.map(c=>shown.clashes.indexOf(c)+1).join("・")}×</span>`:"";
-      b.innerHTML=`<span class="square-attribute-bg attr-${p.attr}" aria-hidden="true">${attributeIcon(p.attr)}</span><span class="piece piece-attr-${p.attr} ${p.color}"><span class="piece-symbol ${p.color===CPU&&uiLanguage==="ja"?"flipped":""}">${symbol(p)}</span>${p.type==="king"&&p.weakHits?`<span class="king-damage">${4-p.weakHits}/4</span>`:""}${lockBadge}</span>`;
+      b.innerHTML=`<span class="square-attribute-bg attr-${p.attr}" aria-hidden="true">${attributeIcon(p.attr)}</span><span class="piece piece-attr-${p.attr} ${p.color}"><span class="piece-symbol ${symbolFacesAway(p.color)?"flipped":""}">${symbol(p)}</span>${p.type==="king"&&p.weakHits?`<span class="king-damage">${4-p.weakHits}/4</span>`:""}${lockBadge}</span>`;
       if(checkEvasions.has(`${x},${y}`)){
         const badge=document.createElement("span");
         badge.className="check-evasion-badge";
@@ -695,12 +708,12 @@ function renderBoard(){
       b.appendChild(marker);
     }
     el.appendChild(b);
-  }));
+  }
   appendMoveArrow(el,last,recent);
 }
 
 function handPieceHtml(p,c){
-  return `<span class="hand-piece-icon ${c}"><span class="hand-piece-attr attr-${p.attr}">${attributeIcon(p.attr)}</span><span class="hand-piece-symbol ${c===CPU&&uiLanguage==="ja"?"flipped":""}">${symbol(p)}</span></span>`;
+  return `<span class="hand-piece-icon ${c}"><span class="hand-piece-attr attr-${p.attr}">${attributeIcon(p.attr)}</span><span class="hand-piece-symbol ${symbolFacesAway(c)?"flipped":""}">${symbol(p)}</span></span>`;
 }
 
 function renderHand(c,listId,stockId){
@@ -926,7 +939,9 @@ function bind(){
   document.getElementById("copy-feedback-template").addEventListener("click",copyFeedbackTemplate);
   document.getElementById("create-online-room").addEventListener("click",createOnlineRoom);
   document.getElementById("join-online-room").addEventListener("click",joinOnlineRoom);
-  document.getElementById("room-code").addEventListener("input",event=>{event.target.value=event.target.value.toUpperCase().replace(/[^A-Z2-9]/g,"").slice(0,6)});
+  const roomCodeInput=document.getElementById("room-code");
+  roomCodeInput.addEventListener("change",()=>{roomCodeInput.value=normalizeRoomCode(roomCodeInput.value)});
+  roomCodeInput.addEventListener("keydown",event=>{if(event.key==="Enter"&&!event.isComposing){event.preventDefault();joinOnlineRoom()}});
   document.getElementById("copy-room-code").addEventListener("click",async()=>{
     const code=document.getElementById("room-code").value;
     try{await navigator.clipboard.writeText(code);setOnlineStatus(bilingual("招待コードをコピーしました。","Invite code copied."),"success")}catch(_error){setOnlineStatus(bilingual(`招待コード: ${code}`,`Invite code: ${code}`),"info")}
