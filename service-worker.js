@@ -1,4 +1,4 @@
-const CACHE_NAME="attribute-shogi-v62";
+const CACHE_NAME="attribute-shogi-v63";
 const ASSETS=[
   "./",
   "./index.html",
@@ -6,7 +6,7 @@ const ASSETS=[
   "./supabase-config.js?v=1",
   "./online-client.js?v=1",
   "./game-core.js?v=18",
-  "./app.js?v=56",
+  "./app.js?v=57",
   "./attributes.json",
   "./fire-realistic-v1.png",
   "./water-realistic-v1.png",

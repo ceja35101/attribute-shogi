@@ -29,6 +29,15 @@ const isPlayerControlled=color=>isOnlineGame()?Boolean(onlineSession?.connected&
 const actorLabel=color=>isLocalGame()||isOnlineGame()?(color===HUMAN?bilingual("先手","Sente"):bilingual("後手","Gote")):color===HUMAN?bilingual("先手","You"):bilingual("後手","CPU");
 const turnPrompt=color=>isLocalGame()?bilingual(`${color===HUMAN?"先手":"後手"}の番です。駒または持ち駒を選んでください。`,`${color===HUMAN?"Sente":"Gote"}'s turn. Select a piece or a piece in hand.`):isOnlineGame()?(color===viewerColor?bilingual("あなたの番です。駒または持ち駒を選んでください。","Your turn. Select a piece or a piece in hand."):bilingual("相手の着手を待っています。","Waiting for the opponent.")):bilingual("あなたの番です。駒または持ち駒を選んでください。","Your turn. Select a piece or a piece in hand.");
 
+function onlinePerspectiveMessage(message){
+  if(!isOnlineGame()||!message)return message;
+  const sente=viewerColor===HUMAN?bilingual("あなた(先手)","You (Sente)"):bilingual("相手(先手)","Opponent (Sente)");
+  const gote=viewerColor===CPU?bilingual("あなた(後手)","You (Gote)"):bilingual("相手(後手)","Opponent (Gote)");
+  return uiLanguage==="en"
+    ?message.replace(/\bSente\b/g,sente).replace(/\bGote\b/g,gote)
+    :message.replace(/先手/g,sente).replace(/後手/g,gote);
+}
+
 const STATIC_TRANSLATIONS={
   "#reset":["初期化","Reset"],"#resign":["投了","Resign"],"#new-game":["もう一度対局する","Play again"],
   "#menu-title":["ルール・設定","Rules & Settings"],"#close-menu":["閉じる","Close"],"#close-rules":["閉じる","Close"],
@@ -94,7 +103,7 @@ function applyOnlineRoom(room,{initial=false}={}){
   if(!Array.isArray(state.fullLog))state.fullLog=[];
   if(!Array.isArray(state.history))state.history=[];
   if(state.winner)state.message=resultForViewer(state.winner);
-  else if(state.turn===viewerColor)state.message=turnPrompt(state.turn);
+  else if(!state.lastMove)state.message=turnPrompt(state.turn);
   replayIndex=null;
   render();
   setOnlineStatus(room.status==="waiting"?bilingual(`部屋 ${room.code}: 相手の参加を待っています。`,`Room ${room.code}: waiting for an opponent.`):bilingual(`接続中: 部屋 ${room.code}（${viewerColor===HUMAN?"先手":"後手"}）`,`Connected: room ${room.code} (${viewerColor===HUMAN?"Sente":"Gote"})`),room.status==="waiting"?"info":"success");
@@ -827,7 +836,8 @@ function render(){
   const shown=shownState();
   document.getElementById("turn").textContent=replayIndex!==null?bilingual(`${shown.ply}手目`,`Move ${shown.ply}`):state.winner?bilingual("対局終了","Game over"):bilingual(`手番: ${owner(state.turn)}`,`Turn: ${owner(state.turn)}`);
   const msg=document.getElementById("message");
-  msg.textContent=replayIndex!==null?(shown.message||bilingual("過去局面を表示中です。","Viewing a previous position.")):state.message;
+  const displayedMessage=replayIndex!==null?(shown.message||bilingual("過去局面を表示中です。","Viewing a previous position.")):state.message;
+  msg.textContent=onlinePerspectiveMessage(displayedMessage);
   msg.className=`message ${replayIndex!==null?(shown.tone||"info"):state.tone}`;
   document.getElementById("end-actions").hidden=!state.winner;
   document.getElementById("reset").disabled=isOnlineGame();

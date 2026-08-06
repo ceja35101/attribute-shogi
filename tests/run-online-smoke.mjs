@@ -53,6 +53,7 @@ try {
   await host.click('.square[data-x="4"][data-y="5"]');
   const hostAfterMove=await host.evaluate(()=>({ply:state.ply,turn:state.turn,selected:state.selected,moves:state.moves.length,connected:onlineSession?.connected,viewerColor,message:state.message,status:document.querySelector("#online-status")?.textContent}));
   if(hostAfterMove.ply!==1)throw new Error(`Host move was not executed: ${JSON.stringify(hostAfterMove)}`);
+  if(!(await host.locator("#message").textContent()).includes("あなた(先手)"))throw new Error("Host did not see its own Sente label");
   await host.waitForFunction(() => document.querySelector("#online-status")?.textContent.includes("同期") || document.querySelector("#online-status")?.classList.contains("error"));
   const hostSyncStatus=await host.locator("#online-status").textContent();
   if(await host.locator("#online-status").evaluate(element=>element.classList.contains("error")))throw new Error(hostSyncStatus);
@@ -64,10 +65,13 @@ try {
   ]);
   const moveError = await host.locator("#online-status.error").textContent().catch(() => null);
   if (moveError) throw new Error(moveError);
+  if(!(await guest.locator("#message").textContent()).includes("相手(先手)"))throw new Error("Guest did not see the opponent Sente label");
 
   await guest.click('.square[data-x="4"][data-y="2"]');
   await guest.click('.square[data-x="4"][data-y="3"]');
+  if(!(await guest.locator("#message").textContent()).includes("あなた(後手)"))throw new Error("Guest did not see its own Gote label");
   await host.waitForFunction(() => state?.ply === 2 && state?.board?.[3]?.[4]?.type === "pawn");
+  if(!(await host.locator("#message").textContent()).includes("相手(後手)"))throw new Error("Host did not see the opponent Gote label");
 
   const result = await host.evaluate(() => ({ ply: state.ply, turn: state.turn, revision: onlineSession?.revision, status: document.querySelector("#online-status")?.textContent }));
   if (result.ply !== 2 || result.turn !== "white" || result.revision < 2) throw new Error(`Unexpected synced state: ${JSON.stringify(result)}`);
