@@ -25,7 +25,7 @@ async function preparePage(context) {
 
 try {
   const hostContext = await browser.newContext();
-  const guestContext = await browser.newContext();
+  const guestContext = await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
   const host = await preparePage(hostContext);
   const guest = await preparePage(guestContext);
 
@@ -38,6 +38,13 @@ try {
   await guest.click("#join-online-room");
   await guest.waitForFunction(() => document.querySelector("#online-status")?.textContent.includes("接続中"));
   await host.waitForFunction(() => document.querySelector("#online-status")?.textContent.includes("接続中"));
+  await host.selectOption("#language-select", "en");
+  await guest.selectOption("#language-select", "en");
+  const hostHandTitles=await host.locator(".hand-panel h2").allTextContents();
+  const guestHandTitles=await guest.locator(".hand-panel h2").allTextContents();
+  if(hostHandTitles.join("|")!=="Opponent's Hand (Gote)|Your Hand (Sente)")throw new Error(`Host hand headings failed: ${hostHandTitles.join("|")}`);
+  if(guestHandTitles.join("|")!=="Your Hand (Gote)|Opponent's Hand (Sente)")throw new Error(`Guest mobile hand headings failed: ${guestHandTitles.join("|")}`);
+  await guest.selectOption("#language-select", "ja");
   await host.click("#close-menu");
   await guest.click("#close-menu");
   const guestPerspective=await guest.evaluate(()=>({
@@ -53,8 +60,8 @@ try {
   await host.click('.square[data-x="4"][data-y="5"]');
   const hostAfterMove=await host.evaluate(()=>({ply:state.ply,turn:state.turn,selected:state.selected,moves:state.moves.length,connected:onlineSession?.connected,viewerColor,message:state.message,status:document.querySelector("#online-status")?.textContent}));
   if(hostAfterMove.ply!==1)throw new Error(`Host move was not executed: ${JSON.stringify(hostAfterMove)}`);
-  if(!(await host.locator("#message").textContent()).includes("あなた(先手)"))throw new Error("Host did not see its own Sente label");
-  await host.waitForFunction(() => document.querySelector("#online-status")?.textContent.includes("同期") || document.querySelector("#online-status")?.classList.contains("error"));
+  if(!(await host.locator("#message").textContent()).includes("You (Sente)"))throw new Error("English host did not see its own Sente label");
+  await host.waitForFunction(() => /同期|synced/i.test(document.querySelector("#online-status")?.textContent||"") || document.querySelector("#online-status")?.classList.contains("error"));
   const hostSyncStatus=await host.locator("#online-status").textContent();
   if(await host.locator("#online-status").evaluate(element=>element.classList.contains("error")))throw new Error(hostSyncStatus);
   const guestRemote=await guest.evaluate(async()=>{const room=await AttributeShogiOnline.getRoom(onlineSession.roomId);return{remoteRevision:room.revision,remotePly:room.state?.ply,localRevision:onlineSession.revision,localPly:state.ply,status:document.querySelector("#online-status")?.textContent}});
@@ -66,12 +73,17 @@ try {
   const moveError = await host.locator("#online-status.error").textContent().catch(() => null);
   if (moveError) throw new Error(moveError);
   if(!(await guest.locator("#message").textContent()).includes("相手(先手)"))throw new Error("Guest did not see the opponent Sente label");
+  if(/[A-Z]\s*:|\b(?:moved|dropped|Reinforcement)\b/.test(await guest.locator("#message").textContent()))throw new Error("Japanese guest received an English move message");
+  const guestLogAfterHost=await guest.locator("#move-log").textContent();
+  if(!guestLogAfterHost.includes("歩")||guestLogAfterHost.includes(" P "))throw new Error(`Japanese guest log was not localized: ${guestLogAfterHost}`);
 
   await guest.click('.square[data-x="4"][data-y="2"]');
   await guest.click('.square[data-x="4"][data-y="3"]');
   if(!(await guest.locator("#message").textContent()).includes("あなた(後手)"))throw new Error("Guest did not see its own Gote label");
   await host.waitForFunction(() => state?.ply === 2 && state?.board?.[3]?.[4]?.type === "pawn");
-  if(!(await host.locator("#message").textContent()).includes("相手(後手)"))throw new Error("Host did not see the opponent Gote label");
+  if(!(await host.locator("#message").textContent()).includes("Opponent (Gote)"))throw new Error("English host did not see the opponent Gote label");
+  const hostLogAfterGuest=await host.locator("#move-log").textContent();
+  if(!hostLogAfterGuest.includes("P :")||/[歩桂銀金角飛香王]/.test(hostLogAfterGuest))throw new Error(`English host log was not localized: ${hostLogAfterGuest}`);
 
   const result = await host.evaluate(() => ({ ply: state.ply, turn: state.turn, revision: onlineSession?.revision, status: document.querySelector("#online-status")?.textContent }));
   if (result.ply !== 2 || result.turn !== "white" || result.revision < 2) throw new Error(`Unexpected synced state: ${JSON.stringify(result)}`);

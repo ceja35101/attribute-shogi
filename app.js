@@ -38,6 +38,31 @@ function onlinePerspectiveMessage(message){
     :message.replace(/先手/g,sente).replace(/後手/g,gote);
 }
 
+function localizedLogText(text,language=uiLanguage){
+  if(!text)return "";
+  const match=String(text).match(/^(.+?)\s*:\s*(.+?)\s*→\s*(.+)$/);
+  if(!match)return language==="en"?String(text).replace(/^パス$/,"Pass"):String(text).replace(/^Pass$/i,"パス");
+  const pieceNames=new Map();
+  for(const data of Object.values(PIECES)){
+    pieceNames.set(data.symbol,{ja:data.symbol,en:data.en});
+    pieceNames.set(data.en,{ja:data.symbol,en:data.en});
+    if(data.promoted&&data.promotedEn){pieceNames.set(data.promoted,{ja:data.promoted,en:data.promotedEn});pieceNames.set(data.promotedEn,{ja:data.promoted,en:data.promotedEn})}
+  }
+  const pieceName=pieceNames.get(match[1].trim())?.[language]||match[1].trim();
+  const from=language==="en"?match[2].trim().replace(/^持ち駒$/,"Hand"):match[2].trim().replace(/^Hand$/i,"持ち駒");
+  let to=match[3].trim();
+  to=language==="en"?to.replace(/（援軍勝利）/g," (Reinforcement Victory)").replace(/（打）/g," (Drop)"):to.replace(/\s*\(Reinforcement Victory\)/gi,"（援軍勝利）").replace(/\s*\(Drop\)/gi,"（打）");
+  return `${pieceName} : ${from} → ${to}`;
+}
+
+function localizedMoveMessage(item){
+  if(!item)return turnPrompt(state.turn);
+  const notation=localizedLogText(item.text),pieceName=notation.split(":")[0].trim();
+  const dropped=/持ち駒|\bHand\b/i.test(notation),supported=/援軍勝利|Reinforcement Victory/i.test(notation),actor=actorLabel(item.color);
+  if(uiLanguage==="en")return `${actor} ${dropped?"dropped":"moved"} ${pieceName}.${supported?" Reinforcement victory.":""}`;
+  return `${actor}が${pieceName}を${dropped?"打ち":"移動し"}ました。${supported?" 援軍勝利です。":""}`;
+}
+
 const STATIC_TRANSLATIONS={
   "#reset":["初期化","Reset"],"#resign":["投了","Resign"],"#new-game":["もう一度対局する","Play again"],
   "#menu-title":["ルール・設定","Rules & Settings"],"#close-menu":["閉じる","Close"],"#close-rules":["閉じる","Close"],
@@ -103,7 +128,7 @@ function applyOnlineRoom(room,{initial=false}={}){
   if(!Array.isArray(state.fullLog))state.fullLog=[];
   if(!Array.isArray(state.history))state.history=[];
   if(state.winner)state.message=resultForViewer(state.winner);
-  else if(!state.lastMove)state.message=turnPrompt(state.turn);
+  else state.message=state.lastMove?localizedMoveMessage(state.log[0]||state.fullLog.at(-1)):turnPrompt(state.turn);
   replayIndex=null;
   render();
   setOnlineStatus(room.status==="waiting"?bilingual(`部屋 ${room.code}: 相手の参加を待っています。`,`Room ${room.code}: waiting for an opponent.`):bilingual(`接続中: 部屋 ${room.code}（${viewerColor===HUMAN?"先手":"後手"}）`,`Connected: room ${room.code} (${viewerColor===HUMAN?"Sente":"Gote"})`),room.status==="waiting"?"info":"success");
@@ -192,6 +217,12 @@ async function restoreOnlineSession(){
   }
 }
 
+function updateHandTitles(){
+  const handTitles=document.querySelectorAll(".hand-panel h2");
+  if(handTitles[0])handTitles[0].textContent=isOnlineGame()?(viewerColor===CPU?bilingual("あなたの持ち駒（後手）","Your Hand (Gote)"):bilingual("相手の持ち駒（後手）","Opponent's Hand (Gote)")):isLocalGame()?bilingual("後手の持ち駒","Gote Pieces in Hand"):bilingual("後手の持ち駒","CPU Pieces in Hand");
+  if(handTitles[1])handTitles[1].textContent=isOnlineGame()?(viewerColor===HUMAN?bilingual("あなたの持ち駒（先手）","Your Hand (Sente)"):bilingual("相手の持ち駒（先手）","Opponent's Hand (Sente)")):isLocalGame()?bilingual("先手の持ち駒","Sente Pieces in Hand"):bilingual("先手の持ち駒","Your Pieces in Hand");
+}
+
 function applyLanguage(){
   document.documentElement.lang=uiLanguage;
   document.title=bilingual("属性付き将棋","Elemental Shogi");
@@ -205,9 +236,7 @@ function applyLanguage(){
     const element=document.querySelector(selector);
     if(element)element.textContent=texts[uiLanguage==="en"?1:0];
   }
-  const handTitles=document.querySelectorAll(".hand-panel h2");
-  if(handTitles[0])handTitles[0].textContent=isOnlineGame()?(viewerColor===CPU?bilingual("あなたの持ち駒（後手）","Your Pieces in Hand (Gote)"):bilingual("相手の持ち駒（後手）","Opponent's Pieces in Hand (Gote)")):isLocalGame()?bilingual("後手の持ち駒","Gote Pieces in Hand"):bilingual("後手の持ち駒","CPU Pieces in Hand");
-  if(handTitles[1])handTitles[1].textContent=isOnlineGame()?(viewerColor===HUMAN?bilingual("あなたの持ち駒（先手）","Your Pieces in Hand (Sente)"):bilingual("相手の持ち駒（先手）","Opponent's Pieces in Hand (Sente)")):isLocalGame()?bilingual("先手の持ち駒","Sente Pieces in Hand"):bilingual("先手の持ち駒","Your Pieces in Hand");
+  updateHandTitles();
   const logTitle=document.querySelector(".log-panel h2");
   if(logTitle)logTitle.textContent=bilingual("直近5手","Last 5 Moves");
   const feedback=document.querySelector(".beta-feedback > p");
@@ -495,14 +524,14 @@ function restoreGame(){
 }
 
 function exportRecord(){
-  const moves=(state.fullLog?.length?state.fullLog:[...state.log].reverse()).map(item=>`${item.number}. ${actorLabel(item.color)} ${item.text}`);
+  const moves=(state.fullLog?.length?state.fullLog:[...state.log].reverse()).map(item=>`${item.number}. ${actorLabel(item.color)} ${localizedLogText(item.text)}`);
   const content=uiLanguage==="en"?["Elemental Shogi Game Record",`Exported: ${new Date().toLocaleString("en")}`,`Moves: ${state.ply}`,`Result: ${state.winner?state.winner==="draw"?"Draw":`${owner(state.winner)} won`:"In progress"}`,"",...moves].join("\n"):["属性将棋 棋譜",`出力日時: ${new Date().toLocaleString("ja-JP")}`,`手数: ${state.ply}`,`結果: ${state.winner?state.winner==="draw"?"引き分け":`${owner(state.winner)}の勝利`:"対局中"}`,"",...moves].join("\n");
   const blob=new Blob([content],{type:"text/plain;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
   a.href=url;a.download=`attribute-shogi-${new Date().toISOString().slice(0,10)}.txt`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
 async function copyDiagnostics(){
-  const details=[bilingual("属性将棋 診断情報","Elemental Shogi Diagnostics"),`Version: ${APP_VERSION}`,`${bilingual("対戦モード","Game mode")}: ${gameMode}`,`UserAgent: ${navigator.userAgent}`,`${bilingual("手数","Moves")}: ${state.ply}`,`${bilingual("手番","Turn")}: ${state.turn}`,`${bilingual("勝者","Winner")}: ${state.winner||bilingual("なし","none")}`,`${bilingual("衝突数","Clashes")}: ${state.clashes.length}`,bilingual("直近ログ:","Recent log:"),...state.log.map(item=>`${item.number}. ${item.text}`)].join("\n");
+  const details=[bilingual("属性将棋 診断情報","Elemental Shogi Diagnostics"),`Version: ${APP_VERSION}`,`${bilingual("対戦モード","Game mode")}: ${gameMode}`,`UserAgent: ${navigator.userAgent}`,`${bilingual("手数","Moves")}: ${state.ply}`,`${bilingual("手番","Turn")}: ${state.turn}`,`${bilingual("勝者","Winner")}: ${state.winner||bilingual("なし","none")}`,`${bilingual("衝突数","Clashes")}: ${state.clashes.length}`,bilingual("直近ログ:","Recent log:"),...state.log.map(item=>`${item.number}. ${localizedLogText(item.text)}`)].join("\n");
   try{await navigator.clipboard.writeText(details);state.message=bilingual("診断情報をクリップボードへコピーしました。","Diagnostics copied to the clipboard.");state.tone="success"}catch(error){state.message=bilingual("診断情報をコピーできませんでした。HTTPSまたはlocalhostで開いてください。","Could not copy diagnostics. Open through HTTPS or localhost.");state.tone="error"}render();
 }
 
@@ -798,7 +827,7 @@ function renderLog(){
     const actor=item.color===HUMAN||item.color===CPU?actorLabel(item.color):actorLabel(item.number%2?HUMAN:CPU);
     button.type="button";
     button.className="log-move-button";
-    button.textContent=`${actor}　${item.text}`;
+    button.textContent=`${actor}　${localizedLogText(item.text)}`;
     button.disabled=item.snapshotIndex==null;
     button.onclick=()=>showReplay(item.snapshotIndex);
     li.appendChild(button);
@@ -829,6 +858,7 @@ function render(){
     lastSoundSnapshot=snapshotIndex;
   }
   renderBoard();
+  updateHandTitles();
   renderHand(CPU,"black-hand","cpu-stock");
   renderHand(HUMAN,"white-hand","human-stock");
   renderLog();
